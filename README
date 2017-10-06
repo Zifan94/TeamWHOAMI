@@ -3,20 +3,20 @@ TEAM MEMBER: Bowen Shi(Leader), Ying Liu, Zifan Yang, Evan Hsia
 
 ===============================================================================
 
-PEEPClientProtocol.py is our lab2 PEEP Client Side Protocol  (Transport Layer)
-PEEPServerProtocol.py is our lab2 PEEP Server Side Protocol  (Transport Layer)
+TeamWHOAMI/netsec_fall2017/lab2/src/lab2_protocol/PEEPClientProtocol.py is our lab2 PEEP Client Side Protocol  (Transport Layer)
+TeamWHOAMI/netsec_fall2017/lab2/src/lab2_protocol/PEEPServerProtocol.py is our lab2 PEEP Server Side Protocol  (Transport Layer)
 
-PassThroughProtocol.py is our lab1_e Pass Through Protocol
+TeamWHOAMI/netsec_fall2017/lab2/src/lab2_protocol/PassThroughProtocol.py is our lab1_e Pass Through Protocol
 
-VerificationCodeClientProtocol.py is our lab1 Client Side Protocol  (Application Layer)
-VerificationCodeServerProtocol.py is our lab1 Server Side Protocol  (Application Layer)
-MyPacket.py is our lab1 Packet 									    (Application Layer)
-
-
-Util.py is some static method we used in our PEEP Protocol
+TeamWHOAMI/netsec_fall2017/lab2/lab2_test/VerificationCodeClientProtocol.py is our lab1 Client Side Protocol  (Application Layer)
+TeamWHOAMI/netsec_fall2017/lab2/lab2_test/VerificationCodeServerProtocol.py is our lab1 Server Side Protocol  (Application Layer)
+TeamWHOAMI/netsec_fall2017/lab2/src/MyPacket.py is our lab1 Packet 									    (Application Layer)
 
 
-UnitTest.py is the unit test for all the files above.
+TeamWHOAMI/netsec_fall2017/lab2/src/lab2_Util/Util.py is some static method we used in our PEEP Protocol
+
+
+TeamWHOAMI/netsec_fall2017/lab2/lab2_test/UnitTest.py is the unit test for all the files above.
 
 ===============================================================================
 ### ./start.sh  is equal to bash start.sh ###
