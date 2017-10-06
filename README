@@ -10,7 +10,7 @@ TeamWHOAMI/netsec_fall2017/lab2/src/lab2_protocol/PassThroughProtocol.py is our 
 
 TeamWHOAMI/netsec_fall2017/lab2/lab2_test/VerificationCodeClientProtocol.py is our lab1 Client Side Protocol  (Application Layer)
 TeamWHOAMI/netsec_fall2017/lab2/lab2_test/VerificationCodeServerProtocol.py is our lab1 Server Side Protocol  (Application Layer)
-MyPacket.py is our lab1 Packet 									    (Application Layer)
+TeamWHOAMI/netsec_fall2017/lab2/src/MyPacket.py is our lab1 Packet 									    (Application Layer)
 
 
 TeamWHOAMI/netsec_fall2017/lab2/src/lab2_Util/Util.py is some static method we used in our PEEP Protocol
