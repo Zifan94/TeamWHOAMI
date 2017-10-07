@@ -33,4 +33,4 @@ class PEEPPacket(PacketType):
     # ACK - 		TYPE 2
     # RIP -		TYPE 3
     # RIP-ACK -	TYPE 4
-    # RST -		TYPE 5
+    # DATA -	TYPE 5

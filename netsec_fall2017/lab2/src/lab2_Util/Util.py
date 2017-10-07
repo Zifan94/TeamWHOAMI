@@ -19,3 +19,15 @@ class Util():
         outBoundPacket.updateChecksum()
 
         return outBoundPacket
+
+    @staticmethod
+    def seq_num_added_by_one(previousSeq, currentSeq):
+        if previousSeq == None:
+            previousSeq = currentSeq
+            return True
+        else:
+            if(currentSeq - previousSeq == 1):
+                previousSeq = currentSeq
+                return True
+            else:
+                return False

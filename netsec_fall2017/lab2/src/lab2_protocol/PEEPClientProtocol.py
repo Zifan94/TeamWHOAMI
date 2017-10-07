@@ -2,6 +2,7 @@ from playground.network.packet import PacketType
 from playground.network.packet.fieldtypes import UINT32, UINT16, UINT8, STRING, BUFFER, BOOL
 from ..lab2_packets import *
 from ..lab2_Util import *
+from ..lab2_transport import *
 from playground.network.common import StackingProtocol, StackingTransport, StackingProtocolFactory
 
 import playground
@@ -10,10 +11,13 @@ import random
 
 import asyncio
 
+from collections import OrderedDict
+
 class PEEPClientProtocol(StackingProtocol):
 	state = "Initial_SYN_State_0"
 	TIMEOUTLIMIT = 10
 	timeout_flag = True
+	data_chunck_dict = None
 
 	def __init__(self, logging=True):
 		if logging:
@@ -23,6 +27,7 @@ class PEEPClientProtocol(StackingProtocol):
 		self.transport = None
 		self.state = "Initial_SYN_State_0"
 		self.logging = logging
+		self.data_chunck_dict = {}
 
 	def connection_made(self, transport):
 		if self.logging:
@@ -81,8 +86,8 @@ class PEEPClientProtocol(StackingProtocol):
 					print("PEEP Client side: checksum is bad")
 				self.state = "error_state"
 			else:  # checksum is good, now we look into the packet
-				if self.logging:
-					print("PEEP Client side: checksum is good")
+				# if self.logging:
+				# 	print("PEEP Client side: checksum is good")
 
 				if packet.Type == 1:	# incoming an SYN-ACK handshake packet
 					if self.state != "SYN_ACK_State_1":
@@ -101,8 +106,51 @@ class PEEPClientProtocol(StackingProtocol):
 						if self.logging:
 							print("PEEP Client Side: ### THREE-WAY HANDSHAKE established ###")
 							print()
-						higherTransport = StackingTransport(self.transport)
+						higherTransport = PEEPTransport(self.transport)
 						self.higherProtocol().connection_made(higherTransport)
+
+				elif packet.Type == 2 and self.state == "Transmission_State_2": # receiving ACK back
+					if self.logging:
+							print("PEEP Client Side: ACK received, Seq = %d"%packet.SequenceNumber)	
+
+				elif packet.Type == 5:	# incomming an Data packet
+					if self.state != "Transmission_State_2":
+						if self.logging:
+							print("PEEP Client Side: Error: State Error! Expecting Transmission_State_2 but getting %s"%self.state)
+						self.state = "error_state"
+					else:
+						if self.logging and packet.Data != b"":
+							print("PEEP Client Side: Data Chunck reveived: Seq = %d, Ack = %d, Checksum = (%d)"%(packet.SequenceNumber,packet.Acknowledgement, packet.Checksum))
+						if packet.Data != b"":
+							self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
+							
+							#### we need to return ACK when received a packet ###
+							outBoundPacket = Util.create_outbound_packet(2, packet.SequenceNumber, 0) # TODO: need to specify the seq num and acknoledgement
+							packetBytes = outBoundPacket.__serialize__()
+							self.transport.write(packetBytes)
+							print("PEEP Client Side: ACK back <=")
+							#####################################################
+
+						else: # Currently, if we recieved a Data packet but has no data, that means it is the last data chunk.
+							if self.logging:	print("PEEP Client Side: all [%s] chunks received, gathering data now +++"%len(self.data_chunck_dict))
+
+							Sorted_dict = OrderedDict(sorted(self.data_chunck_dict.items()))
+							total_data = b""
+							previousKey = None
+						
+							for key, val in Sorted_dict.items():
+								if Util.seq_num_added_by_one(previousKey, key) == False:
+									self.state = "error_state"
+									if self.logging:	print("PEEP Client Side: ERROR: PEEP Packet seq number messed up!!!")
+									break	
+								total_data = total_data + val
+								previousKey = key
+
+							if self.state == "error_state": break
+							if self.logging:	print("PEEP Client Side: Data passed up!\n\n")
+							self.higherProtocol().data_received(total_data)
+
+				# more packet type implemented here
 				else:
 					if self.logging:
 						print("PEEP Client Side: Error: Unrecognize HandShake Type received!")
