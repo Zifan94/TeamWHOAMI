@@ -16,6 +16,7 @@ from collections import OrderedDict
 class PEEPServerProtocol(StackingProtocol):
 	state = "SYN_ACK_State_0"
 	data_chunck_dict = None
+	peeptransport = None
 
 	def __init__(self, logging=True):
 		if logging:
@@ -36,6 +37,44 @@ class PEEPServerProtocol(StackingProtocol):
 		self.transport = None
 		if self.logging:
 			print("PEEP Server Side: Connection Lost...")
+
+	def __data_packet_handler(self,packet):
+		if self.state != "Transmission_State_2":
+			if self.logging:
+				print("PEEP Server Side: Error: State Error! Expecting Transmission_State_2 but getting %s" % self.state)
+			self.state = "error_state"
+		else:
+			if self.logging and packet.Data != b"":
+				print("PEEP Server Side: Data Chunck reveived: Seq = %d, Ack = %d, Checksum = (%d)" % (packet.SequenceNumber, packet.Acknowledgement, packet.Checksum))
+			if packet.Data != b"":
+				self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
+
+				#### we need to return ACK when received a packet ###
+				outBoundPacket = Util.create_outbound_packet(2, packet.SequenceNumber, packet.SequenceNumber)  # TODO: need to specify the seq num and acknoledgement
+				packetBytes = outBoundPacket.__serialize__()
+				self.transport.write(packetBytes)
+				print("PEEP Server Side: ACK back <=")
+				#####################################################
+
+			else:  # Currently, if we recieved a Data packet but has no data, that means it is the last data chunk.
+				if self.logging:
+					print("PEEP Server Side: all [%s] chunks received, gathering data now +++" % len(self.data_chunck_dict))
+
+				Sorted_dict = OrderedDict(sorted(self.data_chunck_dict.items()))
+				total_data = b""
+				previousKey = None
+
+				for key, val in Sorted_dict.items():
+					if Util.seq_num_added_by_one(previousKey, key) == False:
+						self.state = "error_state"
+						if self.logging:    print("PEEP Server Side: ERROR: PEEP Packet seq number messed up!!!")
+						break
+					total_data = total_data + val
+					previousKey = key
+
+				if self.state == "error_state": return
+				if self.logging:    print("PEEP Server Side: Data passed up!\n\n")
+				self.higherProtocol().data_received(total_data)
 
 	def data_received(self, data):
 		self._deserializer.update(data)
@@ -81,50 +120,15 @@ class PEEPServerProtocol(StackingProtocol):
 						if self.logging:
 							print("PEEP Server Side: ### THREE-WAY HANDSHAKE established ###")
 							print()
-						higherTransport = PEEPTransport(self.transport)
-						self.higherProtocol().connection_made(higherTransport)
+						self.peeptransport = PEEPTransport(self.transport)
+						self.higherProtocol().connection_made(self.peeptransport)
 
 					elif self.state == "Transmission_State_2":
-						if self.logging:
-							print("PEEP Server Side: ACK received, Seq = %d"%packet.SequenceNumber)	
+						self.peeptransport.ack_received(packet.Acknowledgement,self.logging)
+
 
 				elif packet.Type == 5:	# incomming an Data packet
-					if self.state != "Transmission_State_2":
-						if self.logging:
-							print("PEEP Server Side: Error: State Error! Expecting Transmission_State_2 but getting %s"%self.state)
-						self.state = "error_state"
-					else:
-						if self.logging and packet.Data != b"":
-							print("PEEP Server Side: Data Chunck reveived: Seq = %d, Ack = %d, Checksum = (%d)"%(packet.SequenceNumber,packet.Acknowledgement, packet.Checksum))
-						if packet.Data != b"":
-							self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
-
-							#### we need to return ACK when received a packet ###
-							outBoundPacket = Util.create_outbound_packet(2, packet.SequenceNumber, 0) # TODO: need to specify the seq num and acknoledgement
-							packetBytes = outBoundPacket.__serialize__()
-							self.transport.write(packetBytes)
-							print("PEEP Server Side: ACK back <=")
-							#####################################################
-
-						else: # Currently, if we recieved a Data packet but has no data, that means it is the last data chunk.
-							if self.logging:	print("PEEP Server Side: all [%s] chunks received, gathering data now +++"%len(self.data_chunck_dict))
-
-							Sorted_dict = OrderedDict(sorted(self.data_chunck_dict.items()))
-							total_data = b""
-							previousKey = None
-						
-							for key, val in Sorted_dict.items():
-								if Util.seq_num_added_by_one(previousKey, key) == False:
-									self.state = "error_state"
-									if self.logging:	print("PEEP Server Side: ERROR: PEEP Packet seq number messed up!!!")
-									break	
-								total_data = total_data + val
-								previousKey = key
-
-							if self.state == "error_state": break
-							if self.logging:	print("PEEP Server Side: Data passed up!\n\n")
-							self.higherProtocol().data_received(total_data)
-
+					self.__data_packet_handler(packet)
 				# more packet type implemented here
 				else:
 					if self.logging:

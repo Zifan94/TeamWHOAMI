@@ -34,3 +34,8 @@ class PEEPTransport(StackingTransport):
 		# TODO: Will change after we get more infomation on Piazza
 		End_Flag_PEEP_Packet = Util.create_outbound_packet(5, 0, 1, b"")
 		self.lowerTransport().write(End_Flag_PEEP_Packet.__serialize__())
+
+	def ack_received(self,ack,logging):
+		if logging:	print("PEEP Transport: ACK received, Seq = %d" % ack)
+
+
