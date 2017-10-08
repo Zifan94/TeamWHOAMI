@@ -7,6 +7,7 @@ from ..lab2_Util import *
 DATA_CHUNK_SIZE = 10
 class PEEPTransport(StackingTransport):
 	logging = True
+	PEEPPacketList = []
 
 	def write(self, data, logging=True):
 		self.logging = logging
@@ -16,24 +17,22 @@ class PEEPTransport(StackingTransport):
 		if self.logging:
 			print("\nPEEP Transport: data length is [%s], and divided into [%s] PEEP packets"%(len(data), size))
 
-		PEEPPacketList = []
+		CurrentPEEPPacketList = []
 		for i in range(1, size+1):
 			if self.logging:
 				print("PEEP Transport: packing #%s PEEP packet..."%i)
 			cur_Data_Chuck = (data[(i-1)*DATA_CHUNK_SIZE : i*DATA_CHUNK_SIZE])
 			cur_PEEP_Packet = Util.create_outbound_packet(5, i, 1, cur_Data_Chuck) #TODO seq num and acknoledgement
-			PEEPPacketList.append(cur_PEEP_Packet)
+			CurrentPEEPPacketList.append(cur_PEEP_Packet)
+			self.PEEPPacketList.append(cur_PEEP_Packet)
 		# #create PEEPPacket
-		for pkt in PEEPPacketList:
+		for pkt in CurrentPEEPPacketList:
 			self.lowerTransport().write(pkt.__serialize__())
 
 		if self.logging:
-			print("PEEP Transport: [%s] PEEP Packets written!\n"%len(PEEPPacketList))
+			print("PEEP Transport: [%s] PEEP Packets written!\n"%len(CurrentPEEPPacketList))
 
-		# Currently, we write an additional data PEEP Packet with empty Data file as the "END FLAG"!
-		# TODO: Will change after we get more infomation on Piazza
-		End_Flag_PEEP_Packet = Util.create_outbound_packet(5, 0, 1, b"")
-		self.lowerTransport().write(End_Flag_PEEP_Packet.__serialize__())
+		
 
 	def ack_received(self,ack,logging):
 		if logging:	print("PEEP Transport: ACK received, Seq = %d" % ack)

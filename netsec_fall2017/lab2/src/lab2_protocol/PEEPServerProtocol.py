@@ -44,37 +44,18 @@ class PEEPServerProtocol(StackingProtocol):
 				print("PEEP Server Side: Error: State Error! Expecting Transmission_State_2 but getting %s" % self.state)
 			self.state = "error_state"
 		else:
-			if self.logging and packet.Data != b"":
+			if self.logging:
 				print("PEEP Server Side: Data Chunck reveived: Seq = %d, Ack = %d, Checksum = (%d)" % (packet.SequenceNumber, packet.Acknowledgement, packet.Checksum))
-			if packet.Data != b"":
-				self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
-
-				#### we need to return ACK when received a packet ###
-				outBoundPacket = Util.create_outbound_packet(2, packet.SequenceNumber, packet.SequenceNumber)  # TODO: need to specify the seq num and acknoledgement
-				packetBytes = outBoundPacket.__serialize__()
-				self.transport.write(packetBytes)
-				print("PEEP Server Side: ACK back <=")
-				#####################################################
-
-			else:  # Currently, if we recieved a Data packet but has no data, that means it is the last data chunk.
-				if self.logging:
-					print("PEEP Server Side: all [%s] chunks received, gathering data now +++" % len(self.data_chunck_dict))
-
-				Sorted_dict = OrderedDict(sorted(self.data_chunck_dict.items()))
-				total_data = b""
-				previousKey = None
-
-				for key, val in Sorted_dict.items():
-					if Util.seq_num_added_by_one(previousKey, key) == False:
-						self.state = "error_state"
-						if self.logging:    print("PEEP Server Side: ERROR: PEEP Packet seq number messed up!!!")
-						break
-					total_data = total_data + val
-					previousKey = key
-
-				if self.state == "error_state": return
-				if self.logging:    print("PEEP Server Side: Data passed up!\n\n")
-				self.higherProtocol().data_received(total_data)
+			
+			self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
+			self.higherProtocol().data_received(packet.Data)
+			
+			#### we need to return ACK when received a packet ###
+			outBoundPacket = Util.create_outbound_packet(2, packet.SequenceNumber, packet.SequenceNumber)  # TODO: need to specify the seq num and acknoledgement
+			packetBytes = outBoundPacket.__serialize__()
+			self.transport.write(packetBytes)
+			print("PEEP Server Side: ACK back <=")
+			#####################################################
 
 	def data_received(self, data):
 		self._deserializer.update(data)
