@@ -54,7 +54,8 @@ class PEEPServerProtocol(StackingProtocol):
 			outBoundPacket = Util.create_outbound_packet(2, packet.SequenceNumber, packet.SequenceNumber)  # TODO: need to specify the seq num and acknoledgement
 			packetBytes = outBoundPacket.__serialize__()
 			self.transport.write(packetBytes)
-			print("PEEP Server Side: ACK back <=")
+			if self.logging:
+				print("PEEP Server Side: ACK back <=")
 			#####################################################
 
 	def data_received(self, data):
@@ -102,6 +103,7 @@ class PEEPServerProtocol(StackingProtocol):
 							print("PEEP Server Side: ### THREE-WAY HANDSHAKE established ###")
 							print()
 						self.peeptransport = PEEPTransport(self.transport)
+						self.peeptransport.logging = self.logging
 						self.higherProtocol().connection_made(self.peeptransport)
 
 					elif self.state == "Transmission_State_2":
