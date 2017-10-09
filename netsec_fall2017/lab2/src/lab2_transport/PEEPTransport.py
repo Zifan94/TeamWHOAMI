@@ -8,9 +8,9 @@ DATA_CHUNK_SIZE = 10
 class PEEPTransport(StackingTransport):
 	logging = True
 	PEEPPacketList = []
+	logging = True
 
-	def write(self, data, logging=True):
-		self.logging = logging
+	def write(self, data):
 		#this will be the data from the upper layer
 		size = int(len(data)/DATA_CHUNK_SIZE)
 		if len(data)%DATA_CHUNK_SIZE != 0: size+=1
