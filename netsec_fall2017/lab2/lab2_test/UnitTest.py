@@ -68,6 +68,9 @@ def basicUnitTestForPEEPProtocol(loggingFlag):
 	client = PEEPClientProtocol(False)
 
 	client.set_timeout_flag(False)
+	client.set_mock_flag(True)
+	server.set_mock_flag(True)
+
 	cTransport, sTransport = MockTransportToProtocol.CreateTransportPair(client, server)
 
 	# test for general connection_made
@@ -239,6 +242,8 @@ def basicUnitTestForAppLayerProtocol(loggingFlag):
 
 	server = VerificationCodeServerProtocol(loop, False)
 	client = VerificationCodeClientProtocol(1, loop, False)
+	server.set_mock_flag(True)
+	client.set_mock_flag(True)
 	cTransport, sTransport = MockTransportToProtocol.CreateTransportPair(client, server)
 
 	# test for general connection_made 
@@ -340,7 +345,7 @@ if __name__ =="__main__":
 	print ("==========================================")
 	print ("### START BASIC UNIT TEST FOR PEEP_PROTOCOL ###")
 	print ("")
-	basicUnitTestForPEEPProtocol(False)
+	basicUnitTestForPEEPProtocol(True)
 	print("")
 	print("")
 	print("### ALL PEEP_PROTOCOL UNIT TEST SUCCESS! ###")

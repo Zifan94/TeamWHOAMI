@@ -21,6 +21,7 @@ class PEEPServerProtocol(StackingProtocol):
 	peeptransport = None
 	ackRceived = 0
 	sequenceNumber = 0
+	isMock = False
 
 	def __init__(self, logging=True):
 		if logging:
@@ -32,6 +33,10 @@ class PEEPServerProtocol(StackingProtocol):
 		self.logging = logging
 		self.data_chunck_dict = {}
 		self.ackRceived = 0
+		self.isMock = False
+
+	def set_mock_flag(self, isMock):
+		self.isMock = isMock
 
 	def current_seq_update(self, seq):
 		self.sequenceNumber = seq
@@ -42,7 +47,8 @@ class PEEPServerProtocol(StackingProtocol):
 		self.transport = transport
 
 	def connection_lost(self, exc=None):
-		self.higherProtocol().connection_lost()
+		if self.isMock == False:
+			self.higherProtocol().connection_lost()
 		self.transport = None
 		if self.logging:
 			print("PEEP Server Side: Connection Lost...")
@@ -59,7 +65,7 @@ class PEEPServerProtocol(StackingProtocol):
 			self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
 			
 			#### we need to return ACK when received a packet ###
-			print(len(packet.Data))
+			# print(len(packet.Data))
 			outBoundPacket = Util.create_outbound_packet(2, None, packet.SequenceNumber+len(packet.Data))
 			packetBytes = outBoundPacket.__serialize__()
 			if self.logging:

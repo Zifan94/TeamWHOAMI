@@ -20,6 +20,7 @@ class PEEPClientProtocol(StackingProtocol):
 	data_chunck_dict = None
 	peeptransport = None
 	sequenceNumber = 0
+	isMock = False
 
 	def __init__(self, logging=True):
 		if logging:
@@ -30,6 +31,10 @@ class PEEPClientProtocol(StackingProtocol):
 		self.state = "Initial_SYN_State_0"
 		self.logging = logging
 		self.data_chunck_dict = {}
+		self.isMock = False
+
+	def set_mock_flag(self, isMock):
+		self.isMock = isMock
 
 	def current_seq_update(self, seq):
 		self.sequenceNumber = seq
