@@ -8,7 +8,7 @@ DATA_CHUNK_SIZE = 10
 class PEEPTransport(StackingTransport):
 	logging = True
 	PEEPPacketList = []
-	logging = True
+	sequenceNumber = 0
 
 	def write(self, data):
 		if data == "app_layer_rip_signal":
@@ -28,7 +28,8 @@ class PEEPTransport(StackingTransport):
 			if self.logging:
 				print("PEEP Transport: packing #%s PEEP packet..."%i)
 			cur_Data_Chuck = (data[(i-1)*DATA_CHUNK_SIZE : i*DATA_CHUNK_SIZE])
-			cur_PEEP_Packet = Util.create_outbound_packet(5, i, 1, cur_Data_Chuck) #TODO seq num and acknoledgement
+			cur_PEEP_Packet = Util.create_outbound_packet(5, self.sequenceNumber, None, cur_Data_Chuck)
+			self.sequenceNumber = self.sequenceNumber+len(cur_Data_Chuck)
 			CurrentPEEPPacketList.append(cur_PEEP_Packet)
 			self.PEEPPacketList.append(cur_PEEP_Packet)
 		# #create PEEPPacket
@@ -40,7 +41,7 @@ class PEEPTransport(StackingTransport):
 
 		
 
-	def ack_received(self,ack,logging):
-		if logging:	print("PEEP Transport: ACK received, Seq = %d" % ack)
+	def ack_received(self,ack):
+		if self.logging:	print("PEEP Transport: ACK received, Ack = %d" % ack)
 
 
