@@ -119,6 +119,7 @@ class VerificationCodeClientProtocol(asyncio.Protocol):
 					if self.logging:
 						print("App_Layer Client Side: Sent Hang up signal!")
 					self.transport.write(packetBytes)
+					self.transport.write("app_layer_rip_signal")
 			else:
 				#print("Client: %s"%self.state)
 				if self.logging:
