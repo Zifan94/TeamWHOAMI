@@ -10,6 +10,7 @@ import asyncio
 
 class VerificationCodeClientProtocol(asyncio.Protocol):
 	state = "initial_state"
+	isMock = False
 	def __init__(self, ID, loop, logging=True):
 		if logging:
 			print("App_Layer Client Side: Init Compelete...")
@@ -19,6 +20,10 @@ class VerificationCodeClientProtocol(asyncio.Protocol):
 		self.state = "initial_state"
 		self.message = ID
 		self.logging = logging
+		self.isMock = False
+
+	def set_mock_flag(self, isMock):
+		self.isMock = isMock
 
 	def connection_made(self, transport):
 		if self.logging:
@@ -119,7 +124,8 @@ class VerificationCodeClientProtocol(asyncio.Protocol):
 					if self.logging:
 						print("App_Layer Client Side: Sent Hang up signal!")
 					self.transport.write(packetBytes)
-					self.transport.write("app_layer_rip_signal")
+					if self.isMock == False:
+						self.transport.write("app_layer_rip_signal")
 			else:
 				#print("Client: %s"%self.state)
 				if self.logging:

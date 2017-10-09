@@ -15,6 +15,7 @@ import asyncio
 
 class VerificationCodeServerProtocol(asyncio.Protocol):
 	state = "wait_for_request_packet"
+	isMock = False
 	def __init__(self, loop, logging=True):
 		if logging:
 			print("App_Layer Server Side: Init Compelete...")
@@ -25,6 +26,10 @@ class VerificationCodeServerProtocol(asyncio.Protocol):
 		self._result = "null"
 		self._verificationCode = 1
 		self.logging = logging
+		self.isMock = False
+
+	def set_mock_flag(self, isMock):
+		self.isMock = isMock
 
 	def connection_made(self, transport):
 		if self.logging:
