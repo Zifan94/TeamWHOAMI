@@ -48,20 +48,21 @@ class PEEPServerProtocol(StackingProtocol):
 				print("PEEP Server Side: Data Chunck reveived: Seq = %d, Ack = %d, Checksum = (%d)" % (packet.SequenceNumber, packet.Acknowledgement, packet.Checksum))
 			
 			self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
-			self.higherProtocol().data_received(packet.Data)
 			
 			#### we need to return ACK when received a packet ###
 			outBoundPacket = Util.create_outbound_packet(2, packet.SequenceNumber, packet.SequenceNumber)  # TODO: need to specify the seq num and acknoledgement
 			packetBytes = outBoundPacket.__serialize__()
-			self.transport.write(packetBytes)
 			if self.logging:
 				print("PEEP Server Side: ACK back <=")
 			#####################################################
+			
+			self.higherProtocol().data_received(packet.Data)
+			self.transport.write(packetBytes)
 
 	def data_received(self, data):
 		self._deserializer.update(data)
 		for packet in self._deserializer.nextPackets():
-			print()
+			if self.logging:	print()
 			if self.transport == None:
 				continue
 
