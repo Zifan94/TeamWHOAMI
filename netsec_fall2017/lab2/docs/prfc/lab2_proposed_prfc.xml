@@ -51,3 +51,35 @@
       <t></t>
     </abstract>
   </front>
+
+  <middle>
+    <section title="Introduction">
+    </section>
+    <section title="Sessions">
+      <section title="Session Establishment">
+      </section>
+      <section title="Session Termination">
+      </section>
+    </section>
+    <section title="Packets">
+      <section title="PEEP Packet">
+      </section>
+    </section>
+    <section title="Protocols">
+      <section title="Client">
+      </section>
+      <section title="Server">
+      </section>
+      <section title="PassThrough">
+      </section>
+      <section title="State Machine">
+      </section>
+      <section title="Data Transmission">
+        <section title="Computational Algorithms">
+        </section>
+        <section title="Error Handling">
+        </section>
+      </section>
+    </section>
+  </middle>
+</rfc>
