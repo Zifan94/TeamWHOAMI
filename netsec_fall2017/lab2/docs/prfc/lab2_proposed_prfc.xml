@@ -48,12 +48,28 @@
     <workgroup>WHOAMI</workgroup>
     <keyword>PRFC</keyword>
     <abstract>
-      <t></t>
+      <t>PEEP (Players Enjoy Eavesdropping Protocol) is a “middleware” protocol intended to provide reliable transmission
+        between two communicating applications. The protocol is composed of three process: three-way handshake, data
+        transmission and four-way termination. This document describes the functions to be performed by the PEEP layer
+        and the program that implements it.</t>
     </abstract>
   </front>
 
   <middle>
     <section title="Introduction">
+      <t>The purpose of lab 2 is to design and implement a TCP-like transport layer to be used by application-layer protocols.
+      This layer connects to the layers used in the PLAYGROUND framework, designed by Dr. Seth James Nielson, to allow students
+      an environment to learn about internet security attacks and defenses on a much smaller scale.</t>
+
+      <t>In particular, the transport layer in lab 2, dubbed PEEP (Players Enjoy Eavesdropping Protocol) consists of the
+        following parts: a 3-way handshake to establish connection between a server side application and a client side
+        application, data transmission between protocols, and a 4-way termination. Although there were multiple teams each working
+        on an implementation on such a layer, the class as a whole was required to use the same general design so that every layer
+        would work on the same PLAYGROUND framework. To accomplish this, each team elected one member to participate in a PETF
+        (Playground Engineering Task Force) to formulate a communal design for the layer, including the expectations of the 3-way
+        handshake, data transmission, and 4-way termination, along with clear acceptance criteria of a PEEP packet and a state machine
+        for the protocols. This PLAYGROUND RFC, or PRFC, will go into more depth of each of these aspects that the PETF agreed on as
+        well as how our team, WHOAMI, handled error cases and unit testing.</t>
     </section>
     <section title="Sessions">
       <section title="Session Establishment">
