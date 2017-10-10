@@ -71,30 +71,36 @@
         for the protocols. This PLAYGROUND RFC, or PRFC, will go into more depth of each of these aspects that the PETF agreed on as
         well as how our team, WHOAMI, handled error cases and unit testing.</t>
     </section>
-    <section title="Sessions">
+    <section title="Session Life">
       <section title="Session Establishment">
       </section>
       <section title="Session Termination">
       </section>
     </section>
-    <section title="Packets">
+    <section title="Packet Description">
       <section title="PEEP Packet">
       </section>
+      <section title="Testing Packets">
+      </section>
     </section>
-    <section title="Protocols">
+    <section title="Protocol Specification">
       <section title="Client">
+        <section title="Client Machine">
+        </section>
       </section>
       <section title="Server">
+        <section title="Server Machine">
+        </section>
       </section>
       <section title="PassThrough">
-      </section>
-      <section title="State Machine">
       </section>
       <section title="Data Transmission">
         <section title="Computational Algorithms">
         </section>
-        <section title="Error Handling">
-        </section>
+      </section>
+    </section>
+    <section title="Testing">
+      <section title="Error Handling">
       </section>
     </section>
   </middle>
