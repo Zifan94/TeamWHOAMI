@@ -25,3 +25,29 @@
 <?rfc subcompact="no" ?>
 
 <rfc category="std" docName="rfc1" ipr="playgroundStd_v1_0" number="1">
+
+
+  <front>
+    <title abbrev="Lab2PRFC">Lab 2 Playground Request For Comments</title>
+    <author fullname="Evan Hsia" initials="E.H." role="editor" surname="Hsia">
+      <organization>JHU Network Security Fall 2017</organization>
+      <address>
+        <postal>
+          <street>Johns Hopkins University 122 Malone Hall/3400 North Charles St.</street>
+          <city>Baltimore</city>
+          <region>MD</region>
+          <code>21218</code>
+          <country>USA</country>
+        </postal>
+        <phone>+1 860-519-4112</phone>
+        <email>ehsia1@jhu.edu</email>
+      </address>
+    </author>
+    <date year="2017" month="October"/>
+    <area>General</area>
+    <workgroup>WHOAMI</workgroup>
+    <keyword>PRFC</keyword>
+    <abstract>
+      <t></t>
+    </abstract>
+  </front>
