@@ -241,7 +241,12 @@
         <section title="Computational Algorithms">
           <t>Up to this point, Checksum has been discussed a lot but not in depth. This section will break down Checksum in more detail.</t>
 
-          <t></t>
+          <t>Checksum calculation is the main computational algorithm used by the PEEP layer. This checksum calculation is used to verify that the packets
+          received are correct and in the right order, as it verifies the value with the checksum of the packet when it was initialized. The checksum calculation
+          stores the original checksum of the packet and resets the checksum of the packet to zero. Then the packet is serialized into bytes and the layer computes
+          the Adler32 of those bytes, truncated to 16 bits. Then, the checksum of the packet is set back to the original checksum, and the Adler32 computation of the
+          bytes is returned. As long as the Adler32 computation of the serialized received packet matches the original checksum of the expected packet, then the
+          packet is verified. Otherwise, the protocol asks for a retransmission of the data.</t>
         </section>
       </section>
       <section title="Error Handling">
