@@ -104,7 +104,7 @@
         <t>In the final step, the client responds with just an ACK packet with both a "seq" and an "ack", sending a confirmation message
         to the server. The "seq" integer here is the same as the one from the SYN-ACK packet received from the server, and the "ack" integer
         is equal to the "ack" from the SYN-ACK packet plus 1. Upon the server receiving this packet, the layer would call the higher layer's,
-        the PassThrough layer's, connection_made() function.</t>
+        the PassThrough layer's, connection_made() function, and data transmission can commence.</t>
       </section>
       <section title="Session Termination">
         <t>Session termination, on the other hand, MUST consist of a 4-way termination. After sending all the data packets,
@@ -132,6 +132,18 @@
       <t>In the previous section, the use of PEEP packets was brought up, but with little depth. In this section, we will more clearly
       describe the packets used in the PEEP layer.</t>
       <section title="PEEP Packet">
+        <t>The PEEP packet is a general packet class designed to send the messages between the server and client. This does not
+        include sending the actual data and information back and forth from server and client, as depending on the requests, the data
+        will change. Rather, the PEEP packet is made for consistency so that the server and client know when to send information back
+        and forth, and when to establish a connection or when to terminate one.</t>
+
+        <t>The PEEP packet is a descendent of the PacketType class from Playground, and as such the fields inherit the types that Playground
+        defines: UINT, INT, STRING, BOOL, BUFFER, and ComplexFieldType. Here, BUFFER and variations of UINT, were used in the field types.</t>
+
+        <t>To be considered a PEEP packet, the packet MUST have five fields: "Type" of type UINT8, optional field "SequenceNumber" of UINT32
+        (often abbreviated seq), "Checksum" of type UINT16, optional field "Acknowledgement" of type UINT32, and optional field "Data"
+        of type BUFFER. All UINTS are unsigned integers, and BUFFER allows the data to be transmitted in bytes to eliminate type conflicts.</t>
+
         <t></t>
       </section>
       <section title="Sample Data Packets">
@@ -139,22 +151,46 @@
       </section>
     </section>
     <section title="Protocol Specification">
-      <section title="Client">
-        <section title="Client Machine">
-        </section>
+      <t>Just like in any other network interactions, there MUST be a client protocol and a server protocol. This section will
+      describe the state machine of the client protocol, the state machine of the server protocol, and the data transmission between
+      the two.</t>
+      <section title="Client Machine">
+        <t>At state 0, the client is in the Initial SYN State. In this state, the client prepares the checksum for the packet header fields.
+        The client then sends the resulting SYN packet to the server to initiate connection.</t>
+
+        <t>In state 1, the client is in the SYN-ACK State. This state exists when the client is awaiting the SYN-ACK packet response from the
+        server. The client MUST have a timeout here to handle the case of the server taking too long to generate a response, which would result
+        from either the initial SYN packet being invalid or the server crashing. If a packet is not received after the timeout, the program
+        terminates. If the packet is received compute the checksum. If the checksum is incorrect, ignore the packet. Otherwise, proceed to
+        transmission.</t>
+
+        <t>In the Transmission State, state 2, the client can now send data packets. When packets are received in this state, the client replies
+        to the server with ACK packets. While the client is in this state, if it receives a data packet from the server and the checksum is incorrect,
+        the client can send back ACK packets alerting the server to retransmit the packet. Otherwise, the ACK packet sends a message of verification that
+        it was received.</t>
       </section>
-      <section title="Server">
-        <section title="Server Machine">
-        </section>
+      <section title="Server Machine">
+        <t>At state 0, the server is in the SYN-ACK State, where it awaits the SYN packet from the client protocol. When the SYN packet
+        is received, the server computes its checksum and if it is correct, it sends the SYN-ACK packet back to the client. In this state,
+        the server MUST have a timeout such that if the server does not receive the SYN packet within that timeout period, the program ends and
+        the server clears its buffer.</t>
+
+        <t>In state 1, the server is now in the SYN state. In this state, the server awaits the ACK packet from the client. Again, the server
+        MUST have a timeout implemented here so that after a certain time, if the packet is not received, the handshake ends and the buffer is
+        cleared. If the packet is received, and the checksum is correct, the server moves to transmission.</t>
+
+        <t>In the Transmission State, state 2, the server can now send data packets to the client, sending ACK packets back to the client when
+        packets are received. If the checksum of any received packet is incorrect, the server can alert the client in the ACK packet to retransmit,
+        but otherwise the ACK packet replies with confirmation.</t>
       </section>
       <section title="Data Transmission">
         <section title="Computational Algorithms">
         </section>
       </section>
     </section>
+    <section title="Error Handling">
+    </section>
     <section title="Testing">
-      <section title="Error Handling">
-      </section>
     </section>
   </middle>
 
