@@ -187,8 +187,21 @@
         <section title="Computational Algorithms">
         </section>
       </section>
-    </section>
-    <section title="Error Handling">
+      <section title="Error Handling">
+        <t>For a successful PEEP layer, there MUST exist two types of error handling in both the client and server whenever packets are received. The
+        first type is a timeout whenever either protocol is awaiting a response, and the second is the checksum to ensure the right packets are
+        received.</t>
+
+        <t>Both sides MUST have a timeout whenever a response is expected for multiple reasons. The first is if there is an error on the other end.
+        So if the client is waiting for a server response, and the server crashes or takes too long because it encounters issues with creating the
+        new packets to send, then the client can terminate the connection because the response is taking too long. Another reason is if there
+        is something blocking the packet in another layer. At that point, the packet would never arrive to the client, and so the connection
+        would be terminated after timeout.</t>
+
+        <t>Both sides MUST also validate the Checksum of each packet to ensure it is the right packet that the protocol is receiving. The packet
+        could either have been generated incorrectly by the other side or could have been altered in another layer. So the Checksum is used to
+        match the fields of the PEEP packet to ensure that it is the one that the protocol was expecting.</t>
+      </section>
     </section>
     <section title="Testing">
     </section>
