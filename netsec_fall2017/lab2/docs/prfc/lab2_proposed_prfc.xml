@@ -200,7 +200,8 @@
 
         <t>Both sides MUST also validate the Checksum of each packet to ensure it is the right packet that the protocol is receiving. The packet
         could either have been generated incorrectly by the other side or could have been altered in another layer. So the Checksum is used to
-        match the fields of the PEEP packet to ensure that it is the one that the protocol was expecting.</t>
+        match the fields of the PEEP packet to ensure that it is the one that the protocol was expecting. If the Checksum is incorrect, the protocol
+        asks for a retransmission of the packet.</t>
       </section>
     </section>
     <section title="Testing">
