@@ -69,8 +69,7 @@
       would operate on the same PLAYGROUND framework. To accomplish this, each team elected one member to participate in a PETF
       (Playground Engineering Task Force) to formulate a communal design for the layer, including the expectations of the 3-way
       handshake, data transmission, and 4-way termination, along with clear acceptance criteria of a PEEP packet and a state machine
-      for the protocols. This PRFC will go into more depth of each of these aspects that the PETF agreed on as well as how our team, WHOAMI,
-      handled error cases and unit testing.</t>
+      for the protocols. This PRFC will go into more depth of each of these aspects that the PETF agreed on as well as error handling.</t>
 
       <section title="Requirements Language">
         <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
@@ -130,7 +129,7 @@
     </section>
     <section title="Packet Description">
       <t>In the previous section, the use of PEEP packets was brought up, but with little depth. In this section, we will more clearly
-      describe the packets used in the PEEP layer.</t>
+      describe the packet used in the PEEP layer.</t>
       <section title="PEEP Packet">
         <t>The PEEP packet is a general packet class designed to send the messages between the server and client. This does not
         include sending the actual data and information back and forth from server and client, as depending on the requests, the data
@@ -144,15 +143,8 @@
         (often abbreviated seq), "Checksum" of type UINT16, optional field "Acknowledgement" of type UINT32, and optional field "Data"
         of type BUFFER. All UINTS are unsigned integers, and BUFFER allows the data to be transmitted in bytes to eliminate type conflicts.</t>
 
-        <t></t>
-      </section>
-      <section title="Sample Data Packets">
-        <t>In addition to the PEEP packet that are consistent to all implementations of the PEEP layer, there are also inevitably data packets
-        that will be sent back and forth between client and server. The ones used by Team WHOAMI for testing purposes are RequestPacket with field
-        "ID" of type UINT32, VerificationCodePacket with fields "ID" of type UINT32 and "originalVerificationCode" of type UINT32, VerifyPacket
-        with fields "ID" of type UINT32 and "answer" of type UINT32, ResultPacket with fields "ID" of type UINT32 and "passfail" of type STRING, and
-        HangUpPacket with fields "ID" of type UINT32 and "hangup" of type BOOL. These packets served as sample data packets to test the transmission
-        between client and server in the PEEP layer.</t>
+        <t>The first field deals with type of the packet. There are six types to any valid PEEP packet. There are SYN, SYN-ACK, ACK, RIP, RIP-ACK,
+        and DATA.</t>
       </section>
     </section>
     <section title="Protocol Specification">
