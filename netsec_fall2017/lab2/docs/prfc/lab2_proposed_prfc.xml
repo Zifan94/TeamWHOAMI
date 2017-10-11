@@ -49,38 +49,89 @@
     <keyword>PRFC</keyword>
     <abstract>
       <t>PEEP (Players Enjoy Eavesdropping Protocol) is a “middleware” protocol intended to provide reliable transmission
-        between two communicating applications. The protocol is composed of three process: three-way handshake, data
-        transmission and four-way termination. This document describes the functions to be performed by the PEEP layer
-        and the program that implements it.</t>
+      between two communicating applications. The protocol is composed of three process: three-way handshake, data
+      transmission and four-way termination. This document describes the functions to be performed by the PEEP layer
+      and the program that implements it.</t>
     </abstract>
   </front>
 
   <middle>
     <section title="Introduction">
       <t>The purpose of lab 2 is to design and implement a TCP-like transport layer to be used by application-layer protocols.
-      This layer connects to the layers used in the PLAYGROUND framework, designed by Dr. Seth James Nielson, to allow students
-      an environment to learn about internet security attacks and defenses on a much smaller scale.</t>
+      This layer connects to the Passthrough layer with the PLAYGROUND framework, designed by Dr. Seth James Nielson, to give students
+      an environment to learn about internet security attacks and defenses on a much smaller scale. The application layer is the higher
+      layer above the Passthrough.</t>
 
       <t>In particular, the transport layer in lab 2, dubbed PEEP (Players Enjoy Eavesdropping Protocol) consists of the
-        following parts: a 3-way handshake to establish connection between a server side application and a client side
-        application, data transmission between protocols, and a 4-way termination. Although there were multiple teams each working
-        on an implementation on such a layer, the class as a whole was required to use the same general design so that every layer
-        would work on the same PLAYGROUND framework. To accomplish this, each team elected one member to participate in a PETF
-        (Playground Engineering Task Force) to formulate a communal design for the layer, including the expectations of the 3-way
-        handshake, data transmission, and 4-way termination, along with clear acceptance criteria of a PEEP packet and a state machine
-        for the protocols. This PLAYGROUND RFC, or PRFC, will go into more depth of each of these aspects that the PETF agreed on as
-        well as how our team, WHOAMI, handled error cases and unit testing.</t>
+      following parts: a 3-way handshake to establish connection between a server side application and a client side
+      application, data transmission between protocols, and a 4-way termination. Although there were multiple teams each working
+      on an implementation on such a layer, the class as a whole was required to use the same general design so that every layer
+      would operate on the same PLAYGROUND framework. To accomplish this, each team elected one member to participate in a PETF
+      (Playground Engineering Task Force) to formulate a communal design for the layer, including the expectations of the 3-way
+      handshake, data transmission, and 4-way termination, along with clear acceptance criteria of a PEEP packet and a state machine
+      for the protocols. This PRFC will go into more depth of each of these aspects that the PETF agreed on as well as how our team, WHOAMI,
+      handled error cases and unit testing.</t>
+
+      <section title="Requirements Language">
+        <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+        "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+        document are to be interpreted as described in <xref
+        target="RFC2119">RFC 2119</xref>.</t>
+      </section>
     </section>
     <section title="Session Life">
+      <t>Just like in TCP, the layer MUST create a sessions in order to account for multiple client protocols connecting to the same
+      server protocol, and to account for the server protocol not terminating properly when a client finishes sending information.
+      Even if different ports are used, the old protocol will still exist in memory. So we create a session to connect the client and
+      server protocols, and in each session there MUST be session establishment and session termination. Both session establishment
+      and termination MUST require client and server protocols sending different types of PEEP packets back and forth. Each of
+      these packets will be discussed in further detail later in this document.</t>
       <section title="Session Establishment">
+        <t>Session establishment MUST use a 3-way handshake involving three different types of PEEP packets. The client first sends
+        a SYN packet to the server that the server validates, then the server replies with a SYN-ACK packet back to the client. Finally,
+        the client sends an ACK packet to start the connection with the server.</t>
+
+        <t>The 3-way handshake is designed for several reasons, and each step has a specific purpose to fulfill those reasons.</t>
+
+        <t>The first step, when the client sends the initial SYN packet to the server, occurs because the client always requests
+        data from the server first. This step is designed to account for the possibility of many clients requesting information
+        from the server at the same time. This reason is why a SYN packet is used, as each SYN packet carries a random number, "seq", identifier.</t>
+
+        <t>The next step occurs when the server sends a SYN-ACK packet back to the client. The server validates the client as a unique client,
+        and then the server grants the connection. Here, each SYN-ACK packet carries a different "seq" random number, and also carries an "ack"
+        integer, where "ack" MUST equal the "seq" from the client plus 1.</t>
+
+        <t>In the final step, the client responds with just an ACK packet with both a "seq" and an "ack", sending a confirmation message
+        to the server. The "seq" integer here is the same as the one from the SYN-ACK packet received from the server, and the "ack" integer
+        is equal to the "ack" from the SYN-ACK packet plus 1. Upon the server receiving this packet, the layer would call the higher layer's,
+        the PassThrough layer's, connection_made() function.</t>
       </section>
       <section title="Session Termination">
+        <t>Session termination, on the other hand, MUST consist of a 4-way termination. After sending all the data packets,
+        the client sends a RIP packet to the server, followed by the server replying with a RIP-ACK packet. At this time, the server
+        also MUST send any remaining data packets to the client, initiating and completing all final data transmission. After the server
+        replies with the rest of the packets, the server then sends a RIP packet of its own to the client, and the client replies with
+        a RIP-ACK packet to close the session.</t>
+
+        <t>Each step of the termination can be broken down further. The first phase is when the client sends the RIP packet to the server.
+        It is the product of the client finishing sending all of its data, and it communicating to the server that the connection can close.</t>
+
+        <t>The next step, when the server sends the RIP-ACK packet back to the client, communicates to the client that the server has
+        received that message that client protocol has finished. In order to complete the connection on the server side, however, the server
+        MUST deliver to the client the rest of the data that the client has requested. Once the server has received the corresponding ACK packets
+        from the client that confirm that the client received the data, the termination can proceed to the next step.</t>
+
+        <t>The third step in the termination occurs when the server sends a RIP packet to the client. Just like with the client sending a RIP packet,
+        the server is simply sending a message to the client communicating that it has finished sending data back and can close now.</t>
+
+        <t>The last step, the client replying with a RIP-ACK, serves as confirmation from the client that it has received the message
+        that the server can close. As a result, both protocols close, and the session terminates.</t>
       </section>
     </section>
     <section title="Packet Description">
       <section title="PEEP Packet">
       </section>
-      <section title="Testing Packets">
+      <section title="Sample Data Packets">
       </section>
     </section>
     <section title="Protocol Specification">
@@ -91,8 +142,6 @@
       <section title="Server">
         <section title="Server Machine">
         </section>
-      </section>
-      <section title="PassThrough">
       </section>
       <section title="Data Transmission">
         <section title="Computational Algorithms">
