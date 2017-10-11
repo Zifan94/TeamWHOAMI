@@ -141,10 +141,29 @@
 
         <t>To be considered a PEEP packet, the packet MUST have five fields: "Type" of type UINT8, optional field "SequenceNumber" of UINT32
         (often abbreviated seq), "Checksum" of type UINT16, optional field "Acknowledgement" of type UINT32, and optional field "Data"
-        of type BUFFER. All UINTS are unsigned integers, and BUFFER allows the data to be transmitted in bytes to eliminate type conflicts.</t>
+        of type BUFFER. All UINTS are unsigned integers, and BUFFER allows the data to be transmitted in bytes to the packets in order.</t>
 
-        <t>The first field deals with type of the packet. There are six types to any valid PEEP packet. There are SYN, SYN-ACK, ACK, RIP, RIP-ACK,
-        and DATA.</t>
+        <t>The first field deals with the type of the packet. There are six types to any valid PEEP packet. There are SYN, SYN-ACK, ACK, RIP, RIP-ACK,
+        and DATA. Depending on the packet type, the rest of the fields will differ in value to distinguish.</t>
+
+        <section title="SYN Packet">
+          As mentioned previously, a SYN packet is used to
+        </section>
+
+        <section title="SYN-ACK Packet">
+        </section>
+
+        <section title="ACK Packet">
+        </section>
+
+        <section title="RIP Packet">
+        </section>
+
+        <section title="RIP-ACK Packet">
+        </section>
+
+        <section title="DATA Packet">
+        </section>
       </section>
     </section>
     <section title="Protocol Specification">
@@ -165,6 +184,17 @@
         to the server with ACK packets. While the client is in this state, if it receives a data packet from the server and the checksum is incorrect,
         the client can send back ACK packets alerting the server to retransmit the packet. Otherwise, the ACK packet sends a message of verification that
         it was received.</t>
+
+        <t>In state 3, the RIP Sent State, the client sends a RIP packet to alert the server that it has sent all data and can close.</t>
+
+        <t>In state 4, RIP_ACK Receive State, the client receives the RIP-ACK packet from the server and waits for the server to clear
+        the buffer. Once the client receives the RIP packet from the server, the client proceeds to the Close State.</t>
+
+        <t>In state 5, the client is in the Close State, and the client replies to the server with a RIP-ACK packet to send confirmation
+        that it received the RIP packet.</t>
+
+        <t>The client also has an Error State, in which it enters when any errors occur in any other state. The client either communicates
+        to the server to retransmit, or it terminates the connection.</t>
       </section>
       <section title="Server Machine">
         <t>At state 0, the server is in the SYN-ACK State, where it awaits the SYN packet from the client protocol. When the SYN packet
@@ -179,6 +209,19 @@
         <t>In the Transmission State, state 2, the server can now send data packets to the client, sending ACK packets back to the client when
         packets are received. If the checksum of any received packet is incorrect, the server can alert the client in the ACK packet to retransmit,
         but otherwise the ACK packet replies with confirmation.</t>
+
+        <t>In state 3, the Clear Buffer State, the server receives the RIP packet from the client and replies to the client with a RIP-ACK packet for
+        confirmation. Then the server proceeds to clear the buffer. It sends any leftover data to the client, receiving ACK packets from the client for
+        confirmation.</t>
+
+        <t>In state 4, the RIP Sent State, the server sends a RIP packet to the client after it finishes clearing the buffer. This packet lets
+        the client know that the server has finished clearing the buffer and is ready to close.</t>
+
+        <t>In state 5, the server is in the Close State, and the server receives the RIP-ACK packet from the client, letting it know that
+        both protocols can close.</t>
+
+        <t>The server also has an Error State, in which it enters when any errors occur in any other state. The server either communicates
+        to the client to retransmit, or it terminates the connection.</t>
       </section>
       <section title="Data Transmission">
         <section title="Computational Algorithms">
@@ -200,8 +243,6 @@
         match the fields of the PEEP packet to ensure that it is the one that the protocol was expecting. If the Checksum is incorrect, the protocol
         asks for a retransmission of the packet.</t>
       </section>
-    </section>
-    <section title="Testing">
     </section>
   </middle>
 
