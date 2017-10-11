@@ -20,6 +20,7 @@ class PEEPClientProtocol(StackingProtocol):
 	data_chunck_dict = None
 	peeptransport = None
 	sequenceNumber = 0
+	seq_expected = 0
 	isMock = False
 
 	def __init__(self, logging=True):
@@ -32,6 +33,7 @@ class PEEPClientProtocol(StackingProtocol):
 		self.logging = logging
 		self.data_chunck_dict = {}
 		self.isMock = False
+		self.seq_expected = 0
 
 	def set_mock_flag(self, isMock):
 		self.isMock = isMock
@@ -85,18 +87,18 @@ class PEEPClientProtocol(StackingProtocol):
 	def __data_packet_handler(self,packet):
 		if self.state != "Transmission_State_2":
 			if self.logging:
-				print("PEEP Server Side: Error: State Error! Expecting Transmission_State_2 but getting %s" % self.state)
+				print("PEEP Client Side: Error: State Error! Expecting Transmission_State_2 but getting %s" % self.state)
 			self.state = "error_state"
 		else:
 			if self.logging:
-				print("PEEP Server Side: Data Chunck reveived: Seq = %d, Checksum = (%d)" % (packet.SequenceNumber, packet.Checksum))
+				print("PEEP Client Side: Data Chunck reveived: Seq = %d, Checksum = (%d)" % (packet.SequenceNumber, packet.Checksum))
 
 			# if packet.Acknowledgement != None:
 			# 	self.__ack_handler(packet.Acknowledgement)
-			print(self.seq_except)
-			if packet.SequenceNumber == self.seq_except:
-				self.seq_except = packet.SequenceNumber+len(packet.Data)
-				self.peeptransport.ack_send_updater(self.seq_except)
+
+			if packet.SequenceNumber == self.seq_expected:
+				self.seq_expected = packet.SequenceNumber+len(packet.Data)
+				self.peeptransport.ack_send_updater(self.seq_expected)
 				self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
 				# TODO Windows Control
 				self.higherProtocol().data_received(packet.Data)
@@ -109,7 +111,7 @@ class PEEPClientProtocol(StackingProtocol):
 		self.peeptransport = PEEPTransport(self.transport)
 		self.peeptransport.logging = self.logging
 		self.peeptransport.sequenceNumber = self.sequenceNumber
-		self.peeptransport.ack_send_autocheck()
+		# self.peeptransport.ack_send_autocheck()
 		self.higherProtocol().connection_made(self.peeptransport)
 
 	def data_received(self, data):
@@ -136,7 +138,7 @@ class PEEPClientProtocol(StackingProtocol):
 						self.state = "error_state"
 					else:
 						self.current_seq_update(packet.Acknowledgement)
-						self.seq_except = packet.SequenceNumber+1
+						self.seq_expected = packet.SequenceNumber+1
 						outBoundPacket = Util.create_outbound_packet(2, self.sequenceNumber, packet.SequenceNumber+1)
 						if self.logging:
 							print("PEEP Client Side: SYN-ACK reveived: Seq = %d, Ack = %d, Checksum = (%d)"%(packet.SequenceNumber,packet.Acknowledgement, packet.Checksum))
