@@ -3,7 +3,7 @@ from playground.network.packet.fieldtypes import UINT32, STRING, BUFFER, BOOL
 from ..src.lab2_packets import *
 from playground.network.common import StackingProtocol, StackingTransport, StackingProtocolFactory
 import playground
-
+from playground.common import logging as p_logging
 import random
 
 import asyncio
@@ -124,8 +124,8 @@ class VerificationCodeClientProtocol(asyncio.Protocol):
 					if self.logging:
 						print("App_Layer Client Side: Sent Hang up signal!")
 					self.transport.write(packetBytes)
-					if self.isMock == False:
-						self.transport.write("app_layer_rip_signal")
+					# if self.isMock == False:
+					# 	self.transport.write("app_layer_rip_signal")
 			else:
 				#print("Client: %s"%self.state)
 				if self.logging:
@@ -139,24 +139,19 @@ class VerificationCodeClientProtocol(asyncio.Protocol):
 			# 	self.transport = None
 
 
-
-
-
-
 	def callbackForUserVCInput(self):
 		answer = input("App_Layer Client Side: Please input the verification code: ")
 		return answer
 
 if __name__ =="__main__":
-	#p_logging.EnablePresetLogging(p_logging.PRESET_TEST)
+	# p_logging.EnablePresetLogging(p_logging.PRESET_TEST)
 	loop = asyncio.get_event_loop()
 	loop.set_debug(enabled = True)
-
 
 	print("----- NEW CONNECTOR SETUP on Client Side-----")
 
 	coro = playground.getConnector('lab2_protocol').create_playground_connection(lambda: VerificationCodeClientProtocol(1, loop), "20174.1.1.1", 101)
 	transport, protocol = loop.run_until_complete(coro)
-	protocol.send_request_packet(protocol.callbackForUserVCInput)
+	protocol.send_request_packet()
 	loop.run_forever()
 	loop.close()
