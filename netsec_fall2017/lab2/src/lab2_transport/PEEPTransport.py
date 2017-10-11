@@ -7,8 +7,9 @@ import asyncio
 import threading
 import time
 
-DATA_CHUNK_SIZE = 20
+DATA_CHUNK_SIZE = 10
 class PEEPTransport(StackingTransport):
+	ACK_TIME_INTERVAL = 0.5
 	TIME_OUT_LIMIE = 3
 	logging = True
 	RetransmissionPacketList = {0: ""}
@@ -53,7 +54,7 @@ class PEEPTransport(StackingTransport):
 			if self.logging:
 				print("PEEP Transport: Packets ack = [%s] not received after TIMEOUT, Retransmission...." %seq)
 			self.lowerTransport().write(self.RetransmissionPacketList[seq].__serialize__())
-			# asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.retransmission_checker, seq)
+			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.retransmission_checker, seq)
 
 	def ack_received(self,ack):
 		if self.logging:	print("PEEP Transport: ACK received, Ack = %d" % ack)
@@ -75,7 +76,7 @@ class PEEPTransport(StackingTransport):
 			self.lowerTransport().write(packetBytes)
 			#####################################################11
 
-		asyncio.get_event_loop().call_later(0.5, self.ack_send_autocheck)
+		asyncio.get_event_loop().call_later(self.ACK_TIME_INTERVAL, self.ack_send_autocheck)
 
 	def ack_send_updater(self, new_ack):
 		self.maxAck = new_ack
