@@ -129,9 +129,13 @@
       </section>
     </section>
     <section title="Packet Description">
+      <t>In the previous section, the use of PEEP packets was brought up, but with little depth. In this section, we will more clearly
+      describe the packets used in the PEEP layer.</t>
       <section title="PEEP Packet">
+        <t></t>
       </section>
       <section title="Sample Data Packets">
+        <t></t>
       </section>
     </section>
     <section title="Protocol Specification">
@@ -153,4 +157,10 @@
       </section>
     </section>
   </middle>
+
+  <back>
+    <references title="Normative References">
+      &RFC2119;
+    </references>
+  </back>
 </rfc>
