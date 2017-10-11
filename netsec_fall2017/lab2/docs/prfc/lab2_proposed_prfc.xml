@@ -147,7 +147,12 @@
         <t></t>
       </section>
       <section title="Sample Data Packets">
-        <t></t>
+        <t>In addition to the PEEP packet that are consistent to all implementations of the PEEP layer, there are also inevitably data packets
+        that will be sent back and forth between client and server. The ones used by Team WHOAMI for testing purposes are RequestPacket with field
+        "ID" of type UINT32, VerificationCodePacket with fields "ID" of type UINT32 and "originalVerificationCode" of type UINT32, VerifyPacket
+        with fields "ID" of type UINT32 and "answer" of type UINT32, ResultPacket with fields "ID" of type UINT32 and "passfail" of type STRING, and
+        HangUpPacket with fields "ID" of type UINT32 and "hangup" of type BOOL. These packets served as sample data packets to test the transmission
+        between client and server in the PEEP layer.</t>
       </section>
     </section>
     <section title="Protocol Specification">
