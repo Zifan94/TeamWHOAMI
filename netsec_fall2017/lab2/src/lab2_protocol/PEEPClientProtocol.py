@@ -15,11 +15,12 @@ from collections import OrderedDict
 
 class PEEPClientProtocol(StackingProtocol):
 	state = "Initial_SYN_State_0"
-	TIMEOUTLIMIT = 10
+	TIMEOUTLIMIT = 7
 	timeout_flag = True
 	data_chunck_dict = None
 	peeptransport = None
 	sequenceNumber = 0
+	seq_expected = 0
 	isMock = False
 
 	def __init__(self, logging=True):
@@ -32,6 +33,7 @@ class PEEPClientProtocol(StackingProtocol):
 		self.logging = logging
 		self.data_chunck_dict = {}
 		self.isMock = False
+		self.seq_expected = 0
 
 	def set_mock_flag(self, isMock):
 		self.isMock = isMock
@@ -75,8 +77,7 @@ class PEEPClientProtocol(StackingProtocol):
 			self.transport.write(packetBytes)
 
 			if self.timeout_flag == True:
-				current_time = asyncio.get_event_loop().time()
-				asyncio.get_event_loop().call_at(current_time + self.TIMEOUTLIMIT, self.timeout_checker)
+				asyncio.get_event_loop().call_later(self.TIMEOUTLIMIT, self.timeout_checker)
 
 	def connection_lost(self, exc=None):
 		self.transport = None
@@ -91,19 +92,27 @@ class PEEPClientProtocol(StackingProtocol):
 		else:
 			if self.logging:
 				print("PEEP Client Side: Data Chunck reveived: Seq = %d, Checksum = (%d)" % (packet.SequenceNumber, packet.Checksum))
-			
-			self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
 
-			#### we need to return ACK when received a packet ###
-			outBoundPacket = Util.create_outbound_packet(2, None, packet.SequenceNumber + len(packet.Data))
-			packetBytes = outBoundPacket.__serialize__()
-			if self.logging:
-				print("PEEP Client Side: ACK back <=")
-			#####################################################
+			# if packet.Acknowledgement != None:
+			# 	self.__ack_handler(packet.Acknowledgement)
 
-			self.transport.write(packetBytes)
-			self.higherProtocol().data_received(packet.Data)
-			
+			if packet.SequenceNumber == self.seq_expected:
+				self.seq_expected = packet.SequenceNumber+len(packet.Data)
+				self.peeptransport.ack_send_updater(self.seq_expected)
+				self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
+				# TODO Windows Control
+				self.higherProtocol().data_received(packet.Data)
+
+	def __ack_handler(self,ack):
+		self.peeptransport.ack_received(ack)
+		# self.ackRceived = self.ackRceived + 1
+
+	def __peeptransport_init(self):
+		self.peeptransport = PEEPTransport(self.transport)
+		self.peeptransport.logging = self.logging
+		self.peeptransport.sequenceNumber = self.sequenceNumber
+		# self.peeptransport.ack_send_autocheck()
+		self.higherProtocol().connection_made(self.peeptransport)
 
 	def data_received(self, data):
 		self._deserializer.update(data)
@@ -117,7 +126,7 @@ class PEEPClientProtocol(StackingProtocol):
 			if (packet.verifyChecksum() == False):
 				if self.logging:
 					print("PEEP Client side: checksum is bad")
-				self.state = "error_state"
+				# self.state = "error_state"
 			else:  # checksum is good, now we look into the packet
 				# if self.logging:
 				# 	print("PEEP Client side: checksum is good")
@@ -129,6 +138,7 @@ class PEEPClientProtocol(StackingProtocol):
 						self.state = "error_state"
 					else:
 						self.current_seq_update(packet.Acknowledgement)
+						self.seq_expected = packet.SequenceNumber+1
 						outBoundPacket = Util.create_outbound_packet(2, self.sequenceNumber, packet.SequenceNumber+1)
 						if self.logging:
 							print("PEEP Client Side: SYN-ACK reveived: Seq = %d, Ack = %d, Checksum = (%d)"%(packet.SequenceNumber,packet.Acknowledgement, packet.Checksum))
@@ -140,13 +150,10 @@ class PEEPClientProtocol(StackingProtocol):
 						if self.logging:
 							print("PEEP Client Side: ### THREE-WAY HANDSHAKE established ###")
 							print()
-						self.peeptransport = PEEPTransport(self.transport)
-						self.peeptransport.logging = self.logging
-						self.peeptransport.sequenceNumber = self.sequenceNumber
-						self.higherProtocol().connection_made(self.peeptransport)
+						self.__peeptransport_init()
 
 				elif packet.Type == 2 and self.state == "Transmission_State_2": # receiving ACK back
-					self.peeptransport.ack_received(packet.Acknowledgement)
+					self.__ack_handler(packet.Acknowledgement)
 
 				elif packet.Type == 3: # incoming an RIP packet
 					if self.state != "Transmission_State_2":

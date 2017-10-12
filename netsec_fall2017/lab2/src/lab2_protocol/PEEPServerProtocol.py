@@ -19,7 +19,7 @@ class PEEPServerProtocol(StackingProtocol):
 	state = "SYN_ACK_State_0"
 	data_chunck_dict = None
 	peeptransport = None
-	ackRceived = 0
+	seq_expected = 0
 	sequenceNumber = 0
 	isMock = False
 
@@ -31,8 +31,8 @@ class PEEPServerProtocol(StackingProtocol):
 		self.transport = None
 		self.state = "SYN_ACK_State_0"
 		self.logging = logging
-		self.data_chunck_dict = {}
-		self.ackRceived = 0
+		self.data_chunck_dict = {0: ""}
+		self.seq_expected = 0
 		self.isMock = False
 
 	def set_mock_flag(self, isMock):
@@ -62,18 +62,25 @@ class PEEPServerProtocol(StackingProtocol):
 			if self.logging:
 				print("PEEP Server Side: Data Chunck reveived: Seq = %d, Checksum = (%d)" % (packet.SequenceNumber, packet.Checksum))
 
-			self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
-			
-			#### we need to return ACK when received a packet ###
-			# print(len(packet.Data))
-			outBoundPacket = Util.create_outbound_packet(2, None, packet.SequenceNumber+len(packet.Data))
-			packetBytes = outBoundPacket.__serialize__()
-			if self.logging:
-				print("PEEP Server Side: ACK back <=")
-			#####################################################
+			# if packet.Acknowledgement != None:
+			# 	self.__ack_handler(packet.Acknowledgement)
+			if packet.SequenceNumber == self.seq_expected:
+				self.seq_expected = packet.SequenceNumber+len(packet.Data)
+				self.peeptransport.ack_send_updater(self.seq_expected)
+				self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
+				# TODO Windows Control
+				self.higherProtocol().data_received(packet.Data)
 
-			self.transport.write(packetBytes)
-			self.higherProtocol().data_received(packet.Data)
+	def __ack_handler(self,ack):
+		self.peeptransport.ack_received(ack)
+		# self.ackRceived = self.ackRceived + 1
+
+	def __peeptransport_init(self):
+		self.peeptransport = PEEPTransport(self.transport)
+		self.peeptransport.logging = self.logging
+		self.peeptransport.sequenceNumber = self.sequenceNumber
+		# self.peeptransport.ack_send_autocheck()
+		self.higherProtocol().connection_made(self.peeptransport)
 
 	def data_received(self, data):
 		self._deserializer.update(data)
@@ -86,7 +93,7 @@ class PEEPServerProtocol(StackingProtocol):
 			if (packet.verifyChecksum() == False):
 				if self.logging:
 					print("PEEP Server side: checksum is bad")
-				self.state = "error_state"
+				# self.state = "error_state"
 			else: # checksum is good, now we look into the packet
 				# if self.logging:
 				# 	print("PEEP Server side: checksum is good")
@@ -120,14 +127,12 @@ class PEEPServerProtocol(StackingProtocol):
 						if self.logging:
 							print("PEEP Server Side: ### THREE-WAY HANDSHAKE established ###")
 							print()
-						self.peeptransport = PEEPTransport(self.transport)
-						self.peeptransport.logging = self.logging
-						self.peeptransport.sequenceNumber = self.sequenceNumber
-						self.higherProtocol().connection_made(self.peeptransport)
+						self.current_seq_update(packet.Acknowledgement)
+						self.seq_expected = packet.SequenceNumber  # not plus 1
+						self.__peeptransport_init()
 
 					elif self.state == "Transmission_State_2" or "RIP_Received_State_3":
-						self.peeptransport.ack_received(packet.Acknowledgement)
-						self.ackRceived = self.ackRceived+1
+						self.__ack_handler(packet.Acknowledgement)
 
 				elif packet.Type == 3: # incoming an RIP packet
 					if self.state != "Transmission_State_2":
