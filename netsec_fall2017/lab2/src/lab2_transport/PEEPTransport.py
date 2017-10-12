@@ -19,14 +19,14 @@ class PEEPTransport(StackingTransport):
 	maxAck = 0
 	ack_sendflag = False
 
+	def close(self):
+		cur_RIP_Packet = Util.create_outbound_packet(3, 0, 0) #TODO seq num and acknoledgement
+		if self.logging:
+			print("\n-------------PEEP Termination Starts--------------------\n")
+			print("\nPEEP Transport: (THIS SHOULD ON CLIENT SIDE ONLY) RIP sent: Seq = %d, Ack = %d, Checksum = (%d)"%(cur_RIP_Packet.SequenceNumber,cur_RIP_Packet.Acknowledgement, cur_RIP_Packet.Checksum))
+		self.lowerTransport().write(cur_RIP_Packet.__serialize__())
 
 	def write(self, data):
-		if data == "app_layer_rip_signal":
-			cur_RIP_Packet = Util.create_outbound_packet(3, 0, 0) #TODO seq num and acknoledgement
-			if self.logging:
-				print("\nPEEP Transport: (THIS SHOULD ON CLIENT SIDE ONLY) RIP sent: Seq = %d, Ack = %d, Checksum = (%d)"%(cur_RIP_Packet.SequenceNumber,cur_RIP_Packet.Acknowledgement, cur_RIP_Packet.Checksum))
-			self.lowerTransport().write(cur_RIP_Packet.__serialize__())
-			return
 		#this will be the data from the upper layer
 		size = int(len(data)/DATA_CHUNK_SIZE)
 		if len(data)%DATA_CHUNK_SIZE != 0: size+=1
@@ -42,7 +42,7 @@ class PEEPTransport(StackingTransport):
 			self.window_control(cur_PEEP_Packet)
 
 	def clean_databuffer(self):  # send the rest data buffer in the list
-		print()
+		print("TODO: we clear buffer over here")
 
 	def window_control(self, packet=None):
 		if packet is not None:

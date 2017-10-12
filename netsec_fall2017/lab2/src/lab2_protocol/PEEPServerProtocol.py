@@ -142,6 +142,7 @@ class PEEPServerProtocol(StackingProtocol):
 					else:
 						outBoundPacket = Util.create_outbound_packet(4, 0, 0) #TODO seq num and ack num
 						if self.logging:
+							print("\n-------------PEEP Termination Starts--------------------\n")
 							print("PEEP Server Side: RIP reveived: Seq = %d, Ack = %d, Checksum = (%d)"%(packet.SequenceNumber,packet.Acknowledgement, packet.Checksum))
 							print("PEEP Server Side: RIP-ACK sent: Seq = %d, Ack = %d, Checksum = (%d)"%(outBoundPacket.SequenceNumber, outBoundPacket.Acknowledgement, outBoundPacket.Checksum))
 				
@@ -150,10 +151,11 @@ class PEEPServerProtocol(StackingProtocol):
 						self.transport.write(packetBytes)
 
 						if self.logging:
-							print("\nPEEP Server Side: Starting sending remaining packets in buffer ...")
+							print("\nPEEP Server Side: ===== Start Clear Buffer =====\n")
 						# sending all the cached packets in buffer here
+						self.peeptransport.clean_databuffer()
 						if self.logging:
-							print("\nPEEP Server Side: Finish sending remainng packets in buffer !!!")
+							print("\nPEEP Server Side: ===== Buffer Cleared =========\n")
 						
 						# set a timeout here to wait for remaining ACKs to sent back
 						# while len(self.peeptransport.PEEPPacketList) > self.ackRceived:

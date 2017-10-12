@@ -124,8 +124,8 @@ class VerificationCodeClientProtocol(asyncio.Protocol):
 					if self.logging:
 						print("App_Layer Client Side: Sent Hang up signal!")
 					self.transport.write(packetBytes)
-					# if self.isMock == False:
-					# 	self.transport.write("app_layer_rip_signal")
+					if self.isMock == False:
+						self.transport.close()
 			else:
 				#print("Client: %s"%self.state)
 				if self.logging:
