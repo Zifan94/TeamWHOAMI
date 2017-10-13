@@ -161,10 +161,10 @@ class PEEPClientProtocol(StackingProtocol):
 							print("PEEP Client Side: Error: State Error! Expecting Transmission_State_2 but getting %s"%self.state)
 						self.state = "error_state"
 					else:
-						outBoundPacket = Util.create_outbound_packet(4, 0, 0) #TODO seq num and ack num
+						outBoundPacket = Util.create_outbound_packet(4, None, packet.SequenceNumber+1) #TODO seq num and ack num
 						if self.logging:
-							print("PEEP Client Side: RIP reveived: Seq = %d, Ack = %d, Checksum = (%d)"%(packet.SequenceNumber,packet.Acknowledgement, packet.Checksum))
-							print("PEEP Client Side: RIP-ACK sent: Seq = %d, Ack = %d, Checksum = (%d)"%(outBoundPacket.SequenceNumber, outBoundPacket.Acknowledgement, outBoundPacket.Checksum))
+							print("PEEP Client Side: RIP reveived: Seq = %d, Checksum = (%d)"%(packet.SequenceNumber, packet.Checksum))
+							print("PEEP Client Side: RIP-ACK sent: Ack = %d, Checksum = (%d)"%(outBoundPacket.Acknowledgement, outBoundPacket.Checksum))
 							print("PEEP Client Side: Preparing to lose connection")
 						packetBytes = outBoundPacket.__serialize__()
 						self.state = "Closing_State_3"
@@ -177,7 +177,7 @@ class PEEPClientProtocol(StackingProtocol):
 						self.state = "error_state"
 					else:
 						if self.logging:
-							print("PEEP Client Side: RIP-ACK received: Seq = %d, Ack = %d, Checksum = (%d), May receiving more data packets"%(packet.SequenceNumber,packet.Acknowledgement, packet.Checksum))
+							print("PEEP Client Side: RIP-ACK received: Ack = %d, Checksum = (%d), May receiving more data packets"%(packet.Acknowledgement, packet.Checksum))
 							
 
 				elif packet.Type == 5:	# incomming an Data packet
