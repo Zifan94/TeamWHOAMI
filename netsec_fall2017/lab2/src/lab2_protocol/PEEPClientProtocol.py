@@ -26,7 +26,7 @@ class PEEPClientProtocol(StackingProtocol):
 	def __init__(self, logging=True):
 		if logging:
 			print("PEEP Client Side: Init Compelete...")
-		self._deserializer = PacketType.Deserializer()
+		self._deserializer = PEEPPacket.Deserializer()
 		super().__init__
 		self.transport = None
 		self.state = "Initial_SYN_State_0"
