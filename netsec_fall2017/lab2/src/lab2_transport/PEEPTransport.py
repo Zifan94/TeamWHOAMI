@@ -62,7 +62,7 @@ class PEEPTransport(StackingTransport):
 			return
 		else:
 			if self.processing_packet < self.WINDOWS_SIZE:
-				process_a_waitList_packet()
+				self.process_a_waitList_packet()
 			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.clean_waitList)
 
 	def clean_RetransmissionPacketList(self):
