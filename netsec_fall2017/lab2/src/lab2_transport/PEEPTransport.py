@@ -5,7 +5,7 @@ from ..lab2_packets import *
 from ..lab2_Util import *
 import asyncio
 
-DATA_CHUNK_SIZE = 10
+DATA_CHUNK_SIZE = 1024 # use 10 for test!!!
 class PEEPTransport(StackingTransport):
 	# ACK_TIME_INTERVAL = 0.5
 	WINDOWS_SIZE = 3
@@ -20,11 +20,15 @@ class PEEPTransport(StackingTransport):
 	ack_sendflag = False
 
 	def close(self):
-		cur_RIP_Packet = Util.create_outbound_packet(3, 0, 0) #TODO seq num and acknoledgement
-		if self.logging:
-			print("\n-------------PEEP Termination Starts--------------------\n")
-			print("\nPEEP Transport: (THIS SHOULD ON CLIENT SIDE ONLY) RIP sent: Seq = %d, Ack = %d, Checksum = (%d)"%(cur_RIP_Packet.SequenceNumber,cur_RIP_Packet.Acknowledgement, cur_RIP_Packet.Checksum))
-		self.lowerTransport().write(cur_RIP_Packet.__serialize__())
+		if len(self.waitingList) != 1 or len(self.RetransmissionPacketList) != 1:
+			self.clean_waitList()
+			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.close)
+		else:
+			cur_RIP_Packet = Util.create_outbound_packet(3, self.sequenceNumber) #TODO seq num and acknoledgement
+			if self.logging:
+				print("\n-------------PEEP Termination Starts--------------------\n")
+				print("\nPEEP Transport: (THIS SHOULD ON CLIENT SIDE ONLY) RIP sent: Seq = %d Checksum = (%d)"%(cur_RIP_Packet.SequenceNumber, cur_RIP_Packet.Checksum))
+			self.lowerTransport().write(cur_RIP_Packet.__serialize__())
 
 	def write(self, data):
 		#this will be the data from the upper layer
@@ -42,11 +46,27 @@ class PEEPTransport(StackingTransport):
 			self.window_control(cur_PEEP_Packet)
 
 	def clean_databuffer(self):  # send the rest data buffer in the list
-		print("TODO: we clear buffer over here")
+		if len(self.waitingList) != 1 or len(self.RetransmissionPacketList) != 1:
+			self.clean_waitList()
+			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.close)
+		else:
+			if self.logging:
+				print("\nPEEP Transport: Buffer is clear!\n")
 
-	def window_control(self, packet=None):
-		if packet is not None:
-			self.waitingList.append(packet)
+	def clean_waitList(self):
+		if len(self.waitingList) == 1: 
+			if self.logging:
+				print("\nPEEP Transport: Wait List is clear!\n")
+			return
+		else:
+			if self.processing_packet < self.WINDOWS_SIZE:
+				process_a_waitList_packet()
+			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.clean_waitList)
+
+	def clean_RetransmissionPacketList(self):
+		print() #TODO
+
+	def process_a_waitList_packet(self):
 		if (self.processing_packet < self.WINDOWS_SIZE) & (len(self.waitingList) > 1):
 			self.processing_packet += 1
 			cur_PEEP_Packet = self.waitingList.pop(1)
@@ -57,6 +77,11 @@ class PEEPTransport(StackingTransport):
 				print("PEEP Transport: Seq = [%s] PEEP Packets written!\n" % cur_PEEP_Packet.SequenceNumber)
 			self.lowerTransport().write(cur_PEEP_Packet.__serialize__())
 			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.retransmission_checker, ackNumber)
+	
+	def window_control(self, packet=None):
+		if packet is not None:
+			self.waitingList.append(packet)
+		self.process_a_waitList_packet()
 
 	def retransmission_checker(self,seq):
 		if seq in self.RetransmissionPacketList:
@@ -91,5 +116,3 @@ class PEEPTransport(StackingTransport):
 		self.maxAck = new_ack
 		self.ack_sendflag = True
 		self.ack_send_check()
-
-
