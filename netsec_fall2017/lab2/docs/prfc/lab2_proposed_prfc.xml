@@ -153,23 +153,35 @@
         </section>
 
         <section title="SYN-ACK Packet, Type 1">
-          <t></t>
+          <t>The SYN-ACK packet is used in response to the client's SYN packet. This packet is sent by the server. Again, there is no
+          data field here, but there are both sequence numbers and ackownledgement numbers. The sequence number is randomly generated, and
+          the acknowledgement number inherits the old sequence number and adds 1.</t>
         </section>
 
         <section title="ACK Packet, Type 2">
-          <t></t>
+          <t>An ACK packet is used in two instances, the end of handshake and during any and all data transmission, including clearing the
+          buffer at the end. An ACK packet has no data field, but has a sequence number and acknowledgement number. Here seq is equal to
+          the acknowledgement number of the last packet received, and the acknowledgement number is the sequence number of the last packet
+          received plus 1 if it is concluding handshake or plus the length of the data if during data transmission.</t>
+
+          <t>An ACK packet must be sent for every DATA packet received, but piggy-backing is NOT required in handling this.</t>
         </section>
 
         <section title="RIP Packet, Type 3">
-          <t></t>
+          <t>A RIP packet is sent twice during session termination, once by the client and once by the server. There is no data field.</t>
         </section>
 
         <section title="RIP-ACK Packet, Type 4">
-          <t></t>
+          <t>A RIP-ACK packet is sent twice as well during termination, by client and server. There is no data field.</t>
         </section>
 
         <section title="DATA Packet, Type 5">
-          <t></t>
+          <t>The DATA packet is sent during data transmission by both client and server. There is no acknowledgement number, and
+          it inherits the sequence number from the packet the protocol just received. The data field consists of what the protocol
+          wants to send to the other, and this data must be chunked during transmission and then that chunking is reversed upon
+          receiving.</t>
+
+          <t>For every DATA packet sent, there must be an ACK packet from the receiving protocol verifying that the data was received.</t>
         </section>
       </section>
     </section>
@@ -241,7 +253,8 @@
         <t>The process for sending data packets is different. Both the client and server MUST have a “window” to control data packets. What does this mean?
         Assume the window size is 5. Then the client/server could send 5 data packets without receiving ACK packets. And then even if they
         have more data packets, they will have to wait for ACK packets. If they receive ACK packets for some of the data packets, the window could move forward.
-        But if they don’t receive any ACK packets within a timeout, they MUST send those packets again.</t>
+        But if they don’t receive any ACK packets within a timeout, they MUST send those packets again. The data MUST also be chunked during sending, but
+        only the data buffer, not the entire packet.</t>
 
         <t>While these processes are defined separately, obviously both will be interacting with each other concurrently. When one protocol sends data,
         the other is receiving it, so both the client and server MUST work together during data transmission.</t>
