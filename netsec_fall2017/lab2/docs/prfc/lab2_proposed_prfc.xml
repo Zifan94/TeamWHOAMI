@@ -168,11 +168,13 @@
         </section>
 
         <section title="RIP Packet, Type 3">
-          <t>A RIP packet is sent twice during session termination, once by the client and once by the server. There is no data field.</t>
+          <t>A RIP packet is sent twice during session termination, once by the client and once by the server. There are no data or acknoweldgement fields.
+          The sequence number is equal to the last data packet's sequence number plus data length.</t>
         </section>
 
         <section title="RIP-ACK Packet, Type 4">
-          <t>A RIP-ACK packet is sent twice as well during termination, by client and server. There is no data field.</t>
+          <t>A RIP-ACK packet is sent twice as well during termination, by client and server. There are no sequence number or data fields.
+          The acknowledgement number is equal to the received RIP packet's sequence number plus 1.</t>
         </section>
 
         <section title="DATA Packet, Type 5">
