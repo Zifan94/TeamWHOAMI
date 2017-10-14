@@ -102,8 +102,8 @@
 
         <t>In the final step, the client responds with just an ACK packet with both a "seq" and an "ack", sending a confirmation message
         to the server. The "seq" integer here is the same as the one from the SYN-ACK packet received from the server, and the "ack" integer
-        is equal to the "ack" from the SYN-ACK packet plus 1. Upon the server receiving this packet, the layer would call the higher layer's,
-        the PassThrough layer's, connection_made() function, and data transmission can commence.</t>
+        is equal to the "ack" from the SYN-ACK packet plus 1. Upon the server receiving this packet, the layer would call the higher protocol's
+        connection_made() function, and data transmission can commence.</t>
       </section>
       <section title="Session Termination">
         <t>Session termination, on the other hand, MUST consist of a 4-way termination. After sending all the data packets,
@@ -214,8 +214,8 @@
         <t>In state 5, the client is in the Close State, and the client replies to the server with a RIP-ACK packet to send confirmation
         that it received the RIP packet.</t>
 
-        <t>The client also has an Error State, in which it enters when any errors occur in any other state. The client either communicates
-        to the server to retransmit, or it terminates the connection.</t>
+        <t>The client also has an Error State, in which it enters when any errors occur in any other state. The client either loses connection unexpectedly or receives an
+        unexpected type of packet at the current state.</t>
       </section>
       <section title="Server Machine">
         <t>At state 0, the server is in the SYN-ACK State, where it awaits the SYN packet from the client protocol. When the SYN packet
@@ -241,8 +241,8 @@
         <t>In state 5, the server is in the Close State, and the server receives the RIP-ACK packet from the client, letting it know that
         both protocols can close.</t>
 
-        <t>The server also has an Error State, in which it enters when any errors occur in any other state. The server either communicates
-        to the client to retransmit, or it terminates the connection.</t>
+        <t>The server also has an Error State, in which it enters when any errors occur in any other state. The server either loses connection unexpectedly or receives
+        an unexpected type of packet at the current state</t>
       </section>
       <section title="Data Transmission">
         <t>While both the client and server are in their Transmission States, both can send and receive data packets.</t>
