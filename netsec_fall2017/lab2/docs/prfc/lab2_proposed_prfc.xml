@@ -102,7 +102,7 @@
 
         <t>In the final step, the client responds with just an ACK packet with both a "seq" and an "ack", sending a confirmation message
         to the server. The "seq" integer here is the same as the one from the SYN-ACK packet received from the server, and the "ack" integer
-        is equal to the "ack" from the SYN-ACK packet plus 1. Upon the server receiving this packet, the layer would call the higher protocol's
+        is equal to the "ack" from the SYN-ACK packet plus 1. Upon the server receiving this packet, the layer would call the higherProtocol's
         connection_made() function, and data transmission can commence.</t>
       </section>
       <section title="Session Termination">
