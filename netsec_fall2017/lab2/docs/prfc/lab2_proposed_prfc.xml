@@ -48,7 +48,7 @@
     <workgroup>WHOAMI</workgroup>
     <keyword>PRFC</keyword>
     <abstract>
-      <t>PEEP (Players Enjoy Eavesdropping Protocol) is a “middleware” protocol intended to provide reliable transmission
+      <t>PEEP (Players Enjoy Eavesdropping Protocol) is a "middleware" protocol intended to provide reliable transmission
       between two communicating applications. The protocol is composed of three process: three-way handshake, data
       transmission and four-way termination. This document describes the functions to be performed by the PEEP layer
       and the program that implements it.</t>
@@ -252,10 +252,10 @@
         are received in order, and all the packets are received. The receiving protocol must also validate the packets by computing and verifying
         their Checksums. The process for computing Checksum will be discussed in further detail in a later section.</t>
 
-        <t>The process for sending data packets is different. Both the client and server MUST have a “window” to control data packets. What does this mean?
+        <t>The process for sending data packets is different. Both the client and server MUST have a "window" to control data packets. What does this mean?
         Assume the window size is 5. Then the client/server could send 5 data packets without receiving ACK packets. And then even if they
         have more data packets, they will have to wait for ACK packets. If they receive ACK packets for some of the data packets, the window could move forward.
-        But if they don’t receive any ACK packets within a timeout, they MUST send those packets again. The data MUST also be chunked during sending, but
+        But if they don't receive any ACK packets within a timeout, they MUST send those packets again. The data MUST also be chunked during sending, but
         only the data buffer, not the entire packet.</t>
 
         <t>While these processes are defined separately, obviously both will be interacting with each other concurrently. When one protocol sends data,

@@ -79,7 +79,7 @@ Table of Contents
        4.3.1.  Computational Algorithms . . . . . . . . . . . . . . .  9
      4.4.  Error Handling . . . . . . . . . . . . . . . . . . . . . . 10
    5.  Normative References . . . . . . . . . . . . . . . . . . . . . 10
-   Author's Address . . . . . . . . . . . . . . . . . . . . . . . . . 10
+   Author's Address . . . . . . . . . . . . . . . . . . . . . . . . . 11
    Intellectual Property and Copyright Statements . . . . . . . . . . 12
 
 
@@ -198,9 +198,8 @@ RFC 1                           Lab2PRFC                    October 2017
    server.  The "seq" integer here is the same as the one from the SYN-
    ACK packet received from the server, and the "ack" integer is equal
    to the "ack" from the SYN-ACK packet plus 1.  Upon the server
-   receiving this packet, the layer would call the higher layer's, the
-   PassThrough layer's, connection_made() function, and data
-   transmission can commence.
+   receiving this packet, the layer would call the higherProtocol's
+   connection_made() function, and data transmission can commence.
 
 2.2.  Session Termination
 
@@ -217,6 +216,7 @@ RFC 1                           Lab2PRFC                    October 2017
    phase is when the client sends the RIP packet to the server.  It is
    the product of the client finishing sending all of its data, and it
    communicating to the server that the connection can close.
+
 
 
 
@@ -403,8 +403,9 @@ RFC 1                           Lab2PRFC                    October 2017
    received the RIP packet.
 
    The client also has an Error State, in which it enters when any
-   errors occur in any other state.  The client either communicates to
-   the server to retransmit, or it terminates the connection.
+   errors occur in any other state.  The client either loses connection
+   unexpectedly or receives an unexpected type of packet at the current
+   state.
 
 4.2.  Server Machine
 
@@ -440,7 +441,6 @@ RFC 1                           Lab2PRFC                    October 2017
    client know that the server has finished clearing the buffer and is
    ready to close.
 
-   In state 5, the server is in the Close State, and the server receives
 
 
 
@@ -449,12 +449,14 @@ Hsia                         Standards Track                    [Page 8]
 RFC 1                           Lab2PRFC                    October 2017
 
 
+   In state 5, the server is in the Close State, and the server receives
    the RIP-ACK packet from the client, letting it know that both
    protocols can close.
 
    The server also has an Error State, in which it enters when any
-   errors occur in any other state.  The server either communicates to
-   the client to retransmit, or it terminates the connection.
+   errors occur in any other state.  The server either loses connection
+   unexpectedly or receives an unexpected type of packet at the current
+   state
 
 4.3.  Data Transmission
 
@@ -495,8 +497,6 @@ RFC 1                           Lab2PRFC                    October 2017
    PEEP layer.  This checksum calculation is used to verify that the
    packets received are correct and in the right order, as it verifies
    the value with the checksum of the packet when it was initialized.
-   The checksum calculation stores the original checksum of the packet
-   and resets the checksum of the packet to zero.  Then the packet is
 
 
 
@@ -505,6 +505,8 @@ Hsia                         Standards Track                    [Page 9]
 RFC 1                           Lab2PRFC                    October 2017
 
 
+   The checksum calculation stores the original checksum of the packet
+   and resets the checksum of the packet to zero.  Then the packet is
    serialized into bytes and the layer computes the Adler32 of those
    bytes, truncated to 16 bits.  Then, the checksum of the packet is set
    back to the original checksum, and the Adler32 computation of the
@@ -549,8 +551,6 @@ RFC 1                           Lab2PRFC                    October 2017
               Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/
               RFC2119, March 1997,
               <https://www.rfc-editor.org/info/rfc2119>.
-
-
 
 
 
