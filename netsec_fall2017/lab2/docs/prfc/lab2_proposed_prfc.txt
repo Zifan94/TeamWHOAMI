@@ -1,0 +1,728 @@
+
+
+
+Network Working Group                                       E. Hsia, Ed.
+Request for Comments: 1                   JHU Network Security Fall 2017
+Category: Standards Track                                   October 2017
+
+
+                 Lab 2 Playground Request For Comments
+
+Abstract
+
+   PEEP (Players Enjoy Eavesdropping Protocol) is a "middleware"
+   protocol intended to provide reliable transmission between two
+   communicating applications.  The protocol is composed of three
+   process: three-way handshake, data transmission and four-way
+   termination.  This document describes the functions to be performed
+   by the PEEP layer and the program that implements it.
+
+Status of this Memo
+
+   This document specifies a Playgrounds standards track protocol for
+   the Playground Experiment, and requests discussion and suggestions
+   for improvements.  Distribution of this memo is unlimited.
+
+Copyright Notice
+
+   Copyright (c) 2017 SETH JAMES NIELSON.  All rights reserved.
+
+   This document is used solely for educational purposes.  Any citations
+   within this document are also for educational purposes and also for
+   technical reference.  If any of these cited elements are protected
+   under copyright, their inclusion here falls under Fair Use
+   provisions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Hsia                         Standards Track                    [Page 1]
+
+RFC 1                           Lab2PRFC                    October 2017
+
+
+Table of Contents
+
+   1.  Introduction . . . . . . . . . . . . . . . . . . . . . . . . .  3
+     1.1.  Requirements Language  . . . . . . . . . . . . . . . . . .  3
+   2.  Session Life . . . . . . . . . . . . . . . . . . . . . . . . .  3
+     2.1.  Session Establishment  . . . . . . . . . . . . . . . . . .  4
+     2.2.  Session Termination  . . . . . . . . . . . . . . . . . . .  4
+   3.  Packet Description . . . . . . . . . . . . . . . . . . . . . .  5
+     3.1.  PEEP Packet  . . . . . . . . . . . . . . . . . . . . . . .  5
+       3.1.1.  SYN Packet, Type 0 . . . . . . . . . . . . . . . . . .  6
+       3.1.2.  SYN-ACK Packet, Type 1 . . . . . . . . . . . . . . . .  6
+       3.1.3.  ACK Packet, Type 2 . . . . . . . . . . . . . . . . . .  6
+       3.1.4.  RIP Packet, Type 3 . . . . . . . . . . . . . . . . . .  6
+       3.1.5.  RIP-ACK Packet, Type 4 . . . . . . . . . . . . . . . .  6
+       3.1.6.  DATA Packet, Type 5  . . . . . . . . . . . . . . . . .  7
+   4.  Protocol Specification . . . . . . . . . . . . . . . . . . . .  7
+     4.1.  Client Machine . . . . . . . . . . . . . . . . . . . . . .  7
+     4.2.  Server Machine . . . . . . . . . . . . . . . . . . . . . .  8
+     4.3.  Data Transmission  . . . . . . . . . . . . . . . . . . . .  9
+       4.3.1.  Computational Algorithms . . . . . . . . . . . . . . .  9
+     4.4.  Error Handling . . . . . . . . . . . . . . . . . . . . . . 10
+   5.  Normative References . . . . . . . . . . . . . . . . . . . . . 10
+   Author's Address . . . . . . . . . . . . . . . . . . . . . . . . . 11
+   Intellectual Property and Copyright Statements . . . . . . . . . . 12
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Hsia                         Standards Track                    [Page 2]
+
+RFC 1                           Lab2PRFC                    October 2017
+
+
+1.  Introduction
+
+   The purpose of lab 2 is to design and implement a TCP-like transport
+   layer to be used by application-layer protocols.  This layer connects
+   to the Passthrough layer with the PLAYGROUND framework, designed by
+   Dr. Seth James Nielson, to give students an environment to learn
+   about internet security attacks and defenses on a much smaller scale.
+   The application layer is the higher layer above the Passthrough.
+
+   In particular, the transport layer in lab 2, dubbed PEEP (Players
+   Enjoy Eavesdropping Protocol) consists of the following parts: a
+   3-way handshake to establish connection between a server side
+   application and a client side application, data transmission between
+   protocols, and a 4-way termination.  Although there were multiple
+   teams each working on an implementation on such a layer, the class as
+   a whole was required to use the same general design so that every
+   layer would operate on the same PLAYGROUND framework.  To accomplish
+   this, each team elected one member to participate in a PETF
+   (Playground Engineering Task Force) to formulate a communal design
+   for the layer, including the expectations of the 3-way handshake,
+   data transmission, and 4-way termination, along with clear acceptance
+   criteria of a PEEP packet and a state machine for the protocols.
+   This PRFC will go into more depth of each of these aspects that the
+   PETF agreed on as well as error handling.
+
+1.1.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in RFC 2119 [RFC2119].
+
+
+2.  Session Life
+
+   Just like in TCP, the layer MUST create a sessions in order to
+   account for multiple client protocols connecting to the same server
+   protocol, and to account for the server protocol not terminating
+   properly when a client finishes sending information.  Even if
+   different ports are used, the old protocol will still exist in
+   memory.  So we create a session to connect the client and server
+   protocols, and in each session there MUST be session establishment
+   and session termination.  Both session establishment and termination
+   MUST require client and server protocols sending different types of
+   PEEP packets back and forth.  Each of these packets will be discussed
+   in further detail later in this document.
+
+
+
+
+
+
+Hsia                         Standards Track                    [Page 3]
+
+RFC 1                           Lab2PRFC                    October 2017
+
+
+2.1.  Session Establishment
+
+   Session establishment MUST use a 3-way handshake involving three
+   different types of PEEP packets.  The client first sends a SYN packet
+   to the server that the server validates, then the server replies with
+   a SYN-ACK packet back to the client.  Finally, the client sends an
+   ACK packet to start the connection with the server.
+
+   The 3-way handshake is designed for several reasons, and each step
+   has a specific purpose to fulfill those reasons.
+
+   The first step, when the client sends the initial SYN packet to the
+   server, occurs because the client always requests data from the
+   server first.  This step is designed to account for the possibility
+   of many clients requesting information from the server at the same
+   time.  This reason is why a SYN packet is used, as each SYN packet
+   carries a random number, "seq", identifier.
+
+   The next step occurs when the server sends a SYN-ACK packet back to
+   the client.  The server validates the client as a unique client, and
+   then the server grants the connection.  Here, each SYN-ACK packet
+   carries a different "seq" random number, and also carries an "ack"
+   integer, where "ack" MUST equal the "seq" from the client plus 1.
+
+   In the final step, the client responds with just an ACK packet with
+   both a "seq" and an "ack", sending a confirmation message to the
+   server.  The "seq" integer here is the same as the one from the SYN-
+   ACK packet received from the server, and the "ack" integer is equal
+   to the "ack" from the SYN-ACK packet plus 1.  Upon the server
+   receiving this packet, the layer would call the higherProtocol's
+   connection_made() function, and data transmission can commence.
+
+2.2.  Session Termination
+
+   Session termination, on the other hand, MUST consist of a 4-way
+   termination.  After sending all the data packets, the client sends a
+   RIP packet to the server, followed by the server replying with a RIP-
+   ACK packet.  At this time, the server also MUST send any remaining
+   data packets to the client, initiating and completing all final data
+   transmission.  After the server replies with the rest of the packets,
+   the server then sends a RIP packet of its own to the client, and the
+   client replies with a RIP-ACK packet to close the session.
+
+   Each step of the termination can be broken down further.  The first
+   phase is when the client sends the RIP packet to the server.  It is
+   the product of the client finishing sending all of its data, and it
+   communicating to the server that the connection can close.
+
+
+
+
+Hsia                         Standards Track                    [Page 4]
+
+RFC 1                           Lab2PRFC                    October 2017
+
+
+   The next step, when the server sends the RIP-ACK packet back to the
+   client, communicates to the client that the server has received that
+   message that client protocol has finished.  In order to complete the
+   connection on the server side, however, the server MUST deliver to
+   the client the rest of the data that the client has requested.  Once
+   the server has received the corresponding ACK packets from the client
+   that confirm that the client received the data, the termination can
+   proceed to the next step.
+
+   The third step in the termination occurs when the server sends a RIP
+   packet to the client.  Just like with the client sending a RIP
+   packet, the server is simply sending a message to the client
+   communicating that it has finished sending data back and can close
+   now.
+
+   The last step, the client replying with a RIP-ACK, serves as
+   confirmation from the client that it has received the message that
+   the server can close.  As a result, both protocols close, and the
+   session terminates.
+
+
+3.  Packet Description
+
+   In the previous section, the use of PEEP packets was brought up, but
+   with little depth.  In this section, we will more clearly describe
+   the packet used in the PEEP layer.
+
+3.1.  PEEP Packet
+
+   The PEEP packet is a general packet class designed to send the
+   messages between the server and client.  This does not include
+   sending the actual data and information back and forth from server
+   and client, as depending on the requests, the data will change.
+   Rather, the PEEP packet is made for consistency so that the server
+   and client know when to send information back and forth, and when to
+   establish a connection or when to terminate one.
+
+   The PEEP packet is a descendent of the PacketType class from
+   Playground, and as such the fields inherit the types that Playground
+   defines: UINT, INT, STRING, BOOL, BUFFER, and ComplexFieldType.
+   Here, BUFFER and variations of UINT, were used in the field types.
+
+   To be considered a PEEP packet, the packet MUST have five fields:
+   "Type" of type UINT8, optional field "SequenceNumber" of UINT32
+   (often abbreviated seq), "Checksum" of type UINT16, optional field
+   "Acknowledgement" of type UINT32, and optional field "Data" of type
+   BUFFER.  All UINTS are unsigned integers, and BUFFER allows the data
+   to be transmitted in bytes to the packets in order.
+
+
+
+Hsia                         Standards Track                    [Page 5]
+
+RFC 1                           Lab2PRFC                    October 2017
+
+
+   The first field deals with the type of the packet.  There are six
+   types to any valid PEEP packet.  There are SYN, SYN-ACK, ACK, RIP,
+   RIP-ACK, and DATA.  Depending on the packet type, the rest of the
+   fields will differ in value to distinguish.  Note that checksum will
+   be talked about in more depth later.
+
+3.1.1.  SYN Packet, Type 0
+
+   As mentioned previously, a SYN packet is used to initiate the 3-way
+   handshake.  This packet is sent by the client to the server.  Here,
+   the sequence number is generated randomly, and there are no
+   acknowledgement or data fields in this packet.
+
+3.1.2.  SYN-ACK Packet, Type 1
+
+   The SYN-ACK packet is used in response to the client's SYN packet.
+   This packet is sent by the server.  Again, there is no data field
+   here, but there are both sequence numbers and ackownledgement
+   numbers.  The sequence number is randomly generated, and the
+   acknowledgement number inherits the old sequence number and adds 1.
+
+3.1.3.  ACK Packet, Type 2
+
+   An ACK packet is used in two instances, the end of handshake and
+   during any and all data transmission, including clearing the buffer
+   at the end.  An ACK packet has no data field, but has a sequence
+   number and acknowledgement number.  Here seq is equal to the
+   acknowledgement number of the last packet received, and the
+   acknowledgement number is the sequence number of the last packet
+   received plus 1 if it is concluding handshake or plus the length of
+   the data if during data transmission.
+
+   An ACK packet must be sent for every DATA packet received, but piggy-
+   backing is NOT required in handling this.
+
+3.1.4.  RIP Packet, Type 3
+
+   A RIP packet is sent twice during session termination, once by the
+   client and once by the server.  There are no data or acknoweldgement
+   fields.  The sequence number is equal to the last data packet's
+   sequence number plus data length.
+
+3.1.5.  RIP-ACK Packet, Type 4
+
+   A RIP-ACK packet is sent twice as well during termination, by client
+   and server.  There are no sequence number or data fields.  The
+   acknowledgement number is equal to the received RIP packet's sequence
+   number plus 1.
+
+
+
+Hsia                         Standards Track                    [Page 6]
+
+RFC 1                           Lab2PRFC                    October 2017
+
+
+3.1.6.  DATA Packet, Type 5
+
+   The DATA packet is sent during data transmission by both client and
+   server.  There is no acknowledgement number, and it inherits the
+   sequence number from the packet the protocol just received.  The data
+   field consists of what the protocol wants to send to the other, and
+   this data must be chunked during transmission and then that chunking
+   is reversed upon receiving.
+
+   For every DATA packet sent, there must be an ACK packet from the
+   receiving protocol verifying that the data was received.
+
+
+4.  Protocol Specification
+
+   Just like in any other network interactions, there MUST be a client
+   protocol and a server protocol.  This section will describe the state
+   machine of the client protocol, the state machine of the server
+   protocol, and the data transmission between the two.
+
+4.1.  Client Machine
+
+   At state 0, the client is in the Initial SYN State.  In this state,
+   the client prepares the checksum for the packet header fields.  The
+   client then sends the resulting SYN packet to the server to initiate
+   connection.
+
+   In state 1, the client is in the SYN-ACK State.  This state exists
+   when the client is awaiting the SYN-ACK packet response from the
+   server.  The client MUST have a timeout here to handle the case of
+   the server taking too long to generate a response, which would result
+   from either the initial SYN packet being invalid or the server
+   crashing.  If a packet is not received after the timeout, the program
+   terminates.  If the packet is received compute the checksum.  If the
+   checksum is incorrect, ignore the packet.  Otherwise, proceed to
+   transmission.
+
+   In the Transmission State, state 2, the client can now send data
+   packets.  When packets are received in this state, the client replies
+   to the server with ACK packets.  While the client is in this state,
+   if it receives a data packet from the server and the checksum is
+   incorrect, the client can send back ACK packets alerting the server
+   to retransmit the packet.  Otherwise, the ACK packet sends a message
+   of verification that it was received.
+
+   In state 3, the RIP Sent State, the client sends a RIP packet to
+   alert the server that it has sent all data and can close.
+
+
+
+
+Hsia                         Standards Track                    [Page 7]
+
+RFC 1                           Lab2PRFC                    October 2017
+
+
+   In state 4, RIP_ACK Receive State, the client receives the RIP-ACK
+   packet from the server and waits for the server to clear the buffer.
+   Once the client receives the RIP packet from the server, the client
+   proceeds to the Close State.
+
+   In state 5, the client is in the Close State, and the client replies
+   to the server with a RIP-ACK packet to send confirmation that it
+   received the RIP packet.
+
+   The client also has an Error State, in which it enters when any
+   errors occur in any other state.  The client either loses connection
+   unexpectedly or receives an unexpected type of packet at the current
+   state.
+
+4.2.  Server Machine
+
+   At state 0, the server is in the SYN-ACK State, where it awaits the
+   SYN packet from the client protocol.  When the SYN packet is
+   received, the server computes its checksum and if it is correct, it
+   sends the SYN-ACK packet back to the client.  In this state, the
+   server MUST have a timeout such that if the server does not receive
+   the SYN packet within that timeout period, the program ends and the
+   server clears its buffer.
+
+   In state 1, the server is now in the SYN state.  In this state, the
+   server awaits the ACK packet from the client.  Again, the server MUST
+   have a timeout implemented here so that after a certain time, if the
+   packet is not received, the handshake ends and the buffer is cleared.
+   If the packet is received, and the checksum is correct, the server
+   moves to transmission.
+
+   In the Transmission State, state 2, the server can now send data
+   packets to the client, sending ACK packets back to the client when
+   packets are received.  If the checksum of any received packet is
+   incorrect, the server can alert the client in the ACK packet to
+   retransmit, but otherwise the ACK packet replies with confirmation.
+
+   In state 3, the Clear Buffer State, the server receives the RIP
+   packet from the client and replies to the client with a RIP-ACK
+   packet for confirmation.  Then the server proceeds to clear the
+   buffer.  It sends any leftover data to the client, receiving ACK
+   packets from the client for confirmation.
+
+   In state 4, the RIP Sent State, the server sends a RIP packet to the
+   client after it finishes clearing the buffer.  This packet lets the
+   client know that the server has finished clearing the buffer and is
+   ready to close.
+
+
+
+
+Hsia                         Standards Track                    [Page 8]
+
+RFC 1                           Lab2PRFC                    October 2017
+
+
+   In state 5, the server is in the Close State, and the server receives
+   the RIP-ACK packet from the client, letting it know that both
+   protocols can close.
+
+   The server also has an Error State, in which it enters when any
+   errors occur in any other state.  The server either loses connection
+   unexpectedly or receives an unexpected type of packet at the current
+   state
+
+4.3.  Data Transmission
+
+   While both the client and server are in their Transmission States,
+   both can send and receive data packets.
+
+   The process for receiving data packets is designed as follows.  Each
+   protocol MUST receive the data packet bytes and, after the last
+   packet is received, reply with an ACK packet for confirmation.  This
+   way, the ACK also guarantees that the packets are received in order,
+   and all the packets are received.  The receiving protocol must also
+   validate the packets by computing and verifying their Checksums.  The
+   process for computing Checksum will be discussed in further detail in
+   a later section.
+
+   The process for sending data packets is different.  Both the client
+   and server MUST have a "window" to control data packets.  What does
+   this mean?  Assume the window size is 5.  Then the client/server
+   could send 5 data packets without receiving ACK packets.  And then
+   even if they have more data packets, they will have to wait for ACK
+   packets.  If they receive ACK packets for some of the data packets,
+   the window could move forward.  But if they don't receive any ACK
+   packets within a timeout, they MUST send those packets again.  The
+   data MUST also be chunked during sending, but only the data buffer,
+   not the entire packet.
+
+   While these processes are defined separately, obviously both will be
+   interacting with each other concurrently.  When one protocol sends
+   data, the other is receiving it, so both the client and server MUST
+   work together during data transmission.
+
+4.3.1.  Computational Algorithms
+
+   Up to this point, Checksum has been discussed a lot but not in depth.
+   This section will break down Checksum in more detail.
+
+   Checksum calculation is the main computational algorithm used by the
+   PEEP layer.  This checksum calculation is used to verify that the
+   packets received are correct and in the right order, as it verifies
+   the value with the checksum of the packet when it was initialized.
+
+
+
+Hsia                         Standards Track                    [Page 9]
+
+RFC 1                           Lab2PRFC                    October 2017
+
+
+   The checksum calculation stores the original checksum of the packet
+   and resets the checksum of the packet to zero.  Then the packet is
+   serialized into bytes and the layer computes the Adler32 of those
+   bytes, truncated to 16 bits.  Then, the checksum of the packet is set
+   back to the original checksum, and the Adler32 computation of the
+   bytes is returned.  As long as the Adler32 computation of the
+   serialized received packet matches the checksum of the expected
+   packet, then the packet is verified.  Otherwise, the protocol asks
+   for a retransmission of the data.
+
+   The checksum of a packet can also be updated by calling the same
+   calculation.
+
+4.4.  Error Handling
+
+   For a successful PEEP layer, there MUST exist two types of error
+   handling in both the client and server whenever packets are received.
+   The first type is a timeout whenever either protocol is awaiting a
+   response, and the second is the checksum to ensure the right packets
+   are received.
+
+   Both sides MUST have a timeout whenever a response is expected for
+   multiple reasons.  The first is if there is an error on the other
+   end.  So if the client is waiting for a server response, and the
+   server crashes or takes too long because it encounters issues with
+   creating the new packets to send, then the client can terminate the
+   connection because the response is taking too long.  Another reason
+   is if there is something blocking the packet in another layer.  At
+   that point, the packet would never arrive to the client, and so the
+   connection would be terminated after timeout.
+
+   Both sides MUST also validate the Checksum of each packet to ensure
+   it is the right packet that the protocol is receiving.  The packet
+   could either have been generated incorrectly by the other side or
+   could have been altered in another layer.  So the Checksum is used to
+   match the fields of the PEEP packet to ensure that it is the one that
+   the protocol was expecting.  If the Checksum is incorrect, the
+   protocol asks for a retransmission of the packet.
+
+
+5.  Normative References
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/
+              RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+
+
+
+
+Hsia                         Standards Track                   [Page 10]
+
+RFC 1                           Lab2PRFC                    October 2017
+
+
+Author's Address
+
+   Evan Hsia (editor)
+   JHU Network Security Fall 2017
+   Johns Hopkins University 122 Malone Hall/3400 North Charles St.
+   Baltimore, MD  21218
+   USA
+
+   Phone: +1 860-519-4112
+   Email: ehsia1@jhu.edu
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Hsia                         Standards Track                   [Page 11]
+
+RFC 1                           Lab2PRFC                    October 2017
+
+
+Full Copyright Statement
+
+   Copyright (C) Seth James Nielson (2017).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the PLAYGROUND experiment or
+   other associated organizations, except by explicit permission.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by SETH JAMES NIELSON or his successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and SETH JAMES NIELSON and associated academic
+   institutions DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Intellectual Property
+
+   The PLAYGROUND framework and student submissions for PLAYGROUND are
+   intended to be free of any intellectual property conflicts.  All
+   submitting parties, especially students, are not allowed to submit
+   source code, specifications, or other components that are known to be
+   protected by copyright, patents, or other IP mechanisms.  Students
+   submitting creative content grant shared rights and ownership of
+   their content to the PLAYGROUND project.  Specifically, any
+   submission can be used in future educational settings including
+   subsequent PLAYGROUND experiments.
+
+   Any interested party is invited to bring to the experiment director's
+   attention any copyrights, patents or patent applications, or other
+   proprietary rights which may cover technology that may be currently
+   in use without permission.
+
+   It should be noted that these statements have not been reviewed by
+   legal counsel.  Moreover, the academic institutions at which
+   PLAYGROUND experiments take place may have additional or even
+   conflicting copyright and intellectual property rules.  Accordingly,
+   concerned parties may need to contact their own lawyer and/or
+   resources at their institution to understand the rights and
+
+
+
+Hsia                         Standards Track                   [Page 12]
+
+RFC 1                           Lab2PRFC                    October 2017
+
+
+   limitations associated with code donated to a PLAYGROUND experiment.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Hsia                         Standards Track                   [Page 13]
+
