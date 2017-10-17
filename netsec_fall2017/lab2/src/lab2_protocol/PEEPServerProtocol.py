@@ -26,7 +26,7 @@ class PEEPServerProtocol(StackingProtocol):
 	def __init__(self, logging=True):
 		if logging:
 			print("PEEP Server Side: Init Compelete...")
-		self._deserializer = PacketType.Deserializer()
+		self._deserializer = PEEPPacket.Deserializer()
 		super().__init__
 		self.transport = None
 		self.state = "SYN_ACK_State_0"
@@ -150,25 +150,12 @@ class PEEPServerProtocol(StackingProtocol):
 						self.state = "RIP_Received_State_3"
 						self.transport.write(packetBytes)
 
-						if self.logging:
-							print("\nPEEP Server Side: ===== Start Clear Buffer =====\n")
+
 						# sending all the cached packets in buffer here
-						self.peeptransport.clean_databuffer()
-						if self.logging:
-							print("\nPEEP Server Side: ===== Buffer Cleared =========\n")
+						self.peeptransport.clear_databuffer_and_send_RIP(self.peeptransport.sequenceNumber)
 						
-						# set a timeout here to wait for remaining ACKs to sent back
-						# while len(self.peeptransport.PEEPPacketList) > self.ackRceived:
-						# 	time.sleep(1)
-
-						# sending RIP to client
-						outBoundPacket = Util.create_outbound_packet(3, self.peeptransport.sequenceNumber+1) #TODO seq num and ack num
-						if self.logging:
-							print("PEEP Server Side: RIP sent: Seq = %d, Checksum = (%d)"%(outBoundPacket.SequenceNumber, outBoundPacket.Checksum))
-						packetBytes = outBoundPacket.__serialize__()
 						self.state = "RIP_sent_State_4"
-						self.transport.write(packetBytes)	
-
+						
 
 				elif packet.Type == 4: # incoming an RIP-ACK packet
 					if self.state != "RIP_sent_State_4": #this should be RIP_sent_State_4 once we figure out the timeout for ack
