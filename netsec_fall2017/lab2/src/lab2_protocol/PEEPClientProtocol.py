@@ -80,6 +80,8 @@ class PEEPClientProtocol(StackingProtocol):
 				asyncio.get_event_loop().call_later(self.TIMEOUTLIMIT, self.timeout_checker)
 
 	def connection_lost(self, exc=None):
+		if self.isMock == False:
+			self.higherProtocol().connection_lost(None)
 		self.transport = None
 		if self.logging:
 			print("PEEP Client Side: Connection Lost...")
@@ -169,6 +171,7 @@ class PEEPClientProtocol(StackingProtocol):
 						packetBytes = outBoundPacket.__serialize__()
 						self.state = "Closing_State_3"
 						self.transport.write(packetBytes)
+						self.connection_lost(None)
 
 				elif packet.Type == 4: # incoming an RIP-ACK packet
 					if self.state != "Transmission_State_2":
