@@ -21,7 +21,7 @@ class PEEPClientTransport(StackingTransport):
 	ack_sendflag = False
 
 	def close(self):
-		if self.logging:	print("\n-------------PEEP Termination Starts--------------------\n")
+		if self.logging:	print("\n-------------PEEP Client Termination Starts--------------------\n")
 		asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.clear_databuffer_and_send_RIP, self.sequenceNumber)
 		# self.clear_databuffer_and_send_RIP(self.sequenceNumber)
 
@@ -31,11 +31,11 @@ class PEEPClientTransport(StackingTransport):
 		size = int(len(data)/DATA_CHUNK_SIZE)
 		if len(data)%DATA_CHUNK_SIZE != 0: size+=1
 		if self.logging:
-			print("\nPEEP Transport: data length is [%s], and divided into [%s] PEEP packets"%(len(data), size))
+			print("\nPEEP Client Transport: data length is [%s], and divided into [%s] PEEP packets"%(len(data), size))
 
 		for i in range(1, size+1):
 			if self.logging:
-				print("PEEP Transport: packing seq = [%s] PEEP packet..." % self.sequenceNumber)
+				print("PEEP Client Transport: packing seq = [%s] PEEP packet..." % self.sequenceNumber)
 			cur_Data_Chuck = (data[(i-1)*DATA_CHUNK_SIZE : i*DATA_CHUNK_SIZE])
 			cur_PEEP_Packet = Util.create_outbound_packet(5, self.sequenceNumber, None, cur_Data_Chuck)
 			self.sequenceNumber += len(cur_PEEP_Packet.Data)
@@ -44,22 +44,22 @@ class PEEPClientTransport(StackingTransport):
 	
 	def clear_databuffer_and_send_RIP(self, seq):
 		if len(self.waitingList) != 1 or len(self.RetransmissionPacketList) != 1:
-			if self.logging:	print("PEEP Transport: Cleaning data buffer now ......")
+			if self.logging:	print("PEEP Client Transport: Cleaning data buffer now ......")
 			self.clean_waitList()
 			self.clean_RetransmissionPacketList()
 			asyncio.get_event_loop().call_later(self.CLEAR_BUFFER_TIME_LIMIT, self.clear_databuffer_and_send_RIP, self.sequenceNumber) 
 		else:
 			cur_RIP_Packet = Util.create_outbound_packet(3, seq)
 			if self.logging:
-				print("\nPEEP Transport: ### Data Buffer is CLEAR ###")
-				print("\nPEEP Transport: RIP sent: Seq = %d Checksum = (%d)"%(cur_RIP_Packet.SequenceNumber, cur_RIP_Packet.Checksum))
+				print("\nPEEP Client Transport: ### Data Buffer is CLEAR ###")
+				print("\nPEEP Client Transport: RIP sent: Seq = %d Checksum = (%d)"%(cur_RIP_Packet.SequenceNumber, cur_RIP_Packet.Checksum))
 			self.lowerTransport().write(cur_RIP_Packet.__serialize__())
 
 
 	def clean_waitList(self):
 		if len(self.waitingList) == 1: 
 			if self.logging:
-				print("\nPEEP Transport: # Wait List is CLEAR! #\n")
+				print("\nPEEP Client Transport: # Wait List is CLEAR! #\n")
 			return
 		else:
 			if self.processing_packet < self.WINDOWS_SIZE:
@@ -70,7 +70,7 @@ class PEEPClientTransport(StackingTransport):
 	def clean_RetransmissionPacketList(self):
 		if len(self.ackList) == 1:
 			if self.logging:
-				print("\nPEEP Transport: # Retransmission Packet List is CLEAR! #\n")
+				print("\nPEEP Client Transport: # Retransmission Packet List is CLEAR! #\n")
 			return
 		else:
 			self.retransmission_checker(self.ackList[1])
@@ -85,7 +85,7 @@ class PEEPClientTransport(StackingTransport):
 			self.RetransmissionPacketList.update({ackNumber: cur_PEEP_Packet})
 			self.ackList.append(ackNumber)
 			if self.logging:
-				print("PEEP Transport: Seq = [%s] PEEP Packets written!\n" % cur_PEEP_Packet.SequenceNumber)
+				print("PEEP Client Transport: Seq = [%s] PEEP Packets written!\n" % cur_PEEP_Packet.SequenceNumber)
 			self.lowerTransport().write(cur_PEEP_Packet.__serialize__())
 			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.retransmission_checker, ackNumber)
 	
@@ -99,13 +99,13 @@ class PEEPClientTransport(StackingTransport):
 	def retransmission_checker(self,seq):
 		if seq in self.RetransmissionPacketList:
 			if self.logging:
-				print("PEEP Transport: Packets ack = [%s] not received after TIMEOUT, Retransmission...." %seq)
+				print("PEEP Client Transport: Packets ack = [%s] not received after TIMEOUT, Retransmission...." %seq)
 			self.lowerTransport().write(self.RetransmissionPacketList[seq].__serialize__())
 			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.retransmission_checker, seq)
 
 
 	def ack_received(self,ack):
-		if self.logging:	print("PEEP Transport: ACK received, Ack = %d" % ack)
+		if self.logging:	print("PEEP Client Transport: ACK received, Ack = %d" % ack)
 		while (self.ackList[1] < ack):
 			del self.RetransmissionPacketList[self.ackList[1]]
 			del self.ackList[1]
@@ -125,7 +125,7 @@ class PEEPClientTransport(StackingTransport):
 			self.ack_sendflag = False
 			self.lowerTransport().write(packetBytes)
 			if self.logging:
-				print("PEEP Transport: ACK back <= ", self.maxAck)
+				print("PEEP Client Transport: ACK back <= ", self.maxAck)
 
 
 	def ack_send_updater(self, new_ack):

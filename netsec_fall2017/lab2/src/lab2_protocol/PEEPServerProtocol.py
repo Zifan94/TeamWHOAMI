@@ -48,7 +48,7 @@ class PEEPServerProtocol(StackingProtocol):
 
 	def connection_lost(self, exc=None):
 		if self.isMock == False:
-			self.higherProtocol().connection_lost()
+			self.higherProtocol().connection_lost(None)
 		self.transport = None
 		if self.logging:
 			print("PEEP Server Side: Connection Lost...")
@@ -142,7 +142,7 @@ class PEEPServerProtocol(StackingProtocol):
 					else:
 						outBoundPacket = Util.create_outbound_packet(4, None, packet.SequenceNumber+1) #TODO seq num and ack num
 						if self.logging:
-							print("\n-------------PEEP Termination Starts--------------------\n")
+							print("\n-------------PEEP Server Termination Starts--------------------\n")
 							print("PEEP Server Side: RIP reveived: Seq = %d, Checksum = (%d)"%(packet.SequenceNumber, packet.Checksum))
 							print("PEEP Server Side: RIP-ACK sent: Ack = %d, Checksum = (%d)"%(outBoundPacket.Acknowledgement, outBoundPacket.Checksum))
 				
@@ -167,7 +167,7 @@ class PEEPServerProtocol(StackingProtocol):
 						if self.logging:
 							print("PEEP Server Side: RIP-ACK reveived: Ack = %d, Checksum = (%d)"%(packet.Acknowledgement, packet.Checksum))
 							print("\nPEEP Server SIde: Preparing connection lose...")
-						self.connection_lost()
+						self.connection_lost(None)
 
 
 				elif packet.Type == 5:	# incomming an Data packet
