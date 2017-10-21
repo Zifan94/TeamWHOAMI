@@ -76,7 +76,7 @@ class PEEPServerProtocol(StackingProtocol):
 		# self.ackRceived = self.ackRceived + 1
 
 	def __peeptransport_init(self):
-		self.peeptransport = PEEPTransport(self.transport)
+		self.peeptransport = PEEPServerTransport(self.transport)
 		self.peeptransport.logging = self.logging
 		self.peeptransport.sequenceNumber = self.sequenceNumber
 		# self.peeptransport.ack_send_autocheck()

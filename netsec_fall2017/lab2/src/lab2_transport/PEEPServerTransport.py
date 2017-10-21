@@ -6,7 +6,7 @@ from ..lab2_Util import *
 import asyncio
 
 DATA_CHUNK_SIZE = 1024 # use 10 for test!!!
-class PEEPTransport(StackingTransport):
+class PEEPServerTransport(StackingTransport):
 	# ACK_TIME_INTERVAL = 0.5
 	WINDOWS_SIZE = 3
 	processing_packet = 0
