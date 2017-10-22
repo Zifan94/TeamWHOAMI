@@ -22,7 +22,7 @@ class PEEPClientTransport(StackingTransport):
 
 	def close(self):
 		if self.logging:	print("\n-------------PEEP Client Termination Starts--------------------\n")
-		asyncio.get_event_loop().call_later(2*self.TIME_OUT_LIMIE, self.clear_databuffer_and_send_RIP, self.sequenceNumber)
+		asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.clear_databuffer_and_send_RIP, self.sequenceNumber)
 		# self.clear_databuffer_and_send_RIP(self.sequenceNumber)
 
 
