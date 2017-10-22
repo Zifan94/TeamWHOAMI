@@ -113,12 +113,13 @@ class PEEPClientProtocol(StackingProtocol):
 
 			# if packet.Acknowledgement != None:
 			# 	self.__ack_handler(packet.Acknowledgement)
+			if (packet.SequenceNumber + len(packet.Data)) == self.seq_expected:
+				self.peeptransport.ack_send_updater(self.seq_expected)
 
 			if packet.SequenceNumber == self.seq_expected:
 				self.seq_expected = packet.SequenceNumber+len(packet.Data)
 				self.peeptransport.ack_send_updater(self.seq_expected)
 				self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
-				# TODO Windows Control
 				self.higherProtocol().data_received(packet.Data)
 
 	def __ack_handler(self,ack):

@@ -8,9 +8,9 @@ import asyncio
 DATA_CHUNK_SIZE = 1024 # use 10 for test!!!
 class PEEPClientTransport(StackingTransport):
 	# ACK_TIME_INTERVAL = 0.5
-	WINDOWS_SIZE = 3
+	WINDOWS_SIZE = 10
 	processing_packet = 0
-	TIME_OUT_LIMIE = 3
+	TIME_OUT_LIMIE = 1
 	CLEAR_BUFFER_TIME_LIMIT = 0.5
 	logging = True
 	RetransmissionPacketList = {0: ""}
@@ -22,7 +22,7 @@ class PEEPClientTransport(StackingTransport):
 
 	def close(self):
 		if self.logging:	print("\n-------------PEEP Client Termination Starts--------------------\n")
-		asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.clear_databuffer_and_send_RIP, self.sequenceNumber)
+		asyncio.get_event_loop().call_later(2*self.TIME_OUT_LIMIE, self.clear_databuffer_and_send_RIP, self.sequenceNumber)
 		# self.clear_databuffer_and_send_RIP(self.sequenceNumber)
 
 
@@ -129,6 +129,6 @@ class PEEPClientTransport(StackingTransport):
 
 
 	def ack_send_updater(self, new_ack):
-		self.maxAck = new_ack
+		self.maxAck = max(new_ack, self.maxAck)
 		self.ack_sendflag = True
 		self.ack_send_check()
