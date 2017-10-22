@@ -25,6 +25,10 @@ class PEEPServerProtocol(StackingProtocol):
 	isMock = False
 	timeout_flag = True
 	outBoundSYNACKPacket_3way_handshake = None
+	income_RIP_count = 0
+	outBoundRIPACKPacket_4way_termination = None
+	WAIT_TO_CONTINUE_TIMEOUTLIMIT = 3
+
 
 	def __init__(self, logging=True):
 		if logging:
@@ -39,6 +43,9 @@ class PEEPServerProtocol(StackingProtocol):
 		self.isMock = False
 		self.timeout_flag = True
 		self.outBoundSYNACKPacket_3way_handshake = None
+		self.income_RIP_count = 0
+		self.outBoundRIPACKPacket_4way_termination = None
+		self.WAIT_TO_CONTINUE_TIMEOUTLIMIT = 3
 
 	def set_mock_flag(self, isMock):
 		self.isMock = isMock
@@ -80,7 +87,10 @@ class PEEPServerProtocol(StackingProtocol):
 				print("PEEP Server Side: Time-out Flag OFF!")
 
 	def __data_packet_handler(self,packet):
-		if self.state != "Transmission_State_2":
+		if packet.Type == 3:
+			if self.logging:
+				print("PEEP Server Side: DROP redundent RIP")
+		elif self.state != "Transmission_State_2":
 			if self.logging:
 				print("PEEP Server Side: Error: State Error! Expecting Transmission_State_2 but getting %s" % self.state)
 			self.state = "error_state"
@@ -165,11 +175,13 @@ class PEEPServerProtocol(StackingProtocol):
 						self.__ack_handler(packet.Acknowledgement)
 
 				elif packet.Type == 3: # incoming an RIP packet
-					if self.state != "Transmission_State_2":
+					if self.state != "Transmission_State_2" and self.state !="RIP_Received_State_3":
 						if self.logging:
-							print("PEEP Server Side: Error: State Error! Expecting Transmission_State_2 but getting %s"%self.state)
+							print("PEEP Server Side: Error: State Error! Expecting Transmission_State_2 or RIP_Received_State_3 but getting %s"%self.state)
 						self.state = "error_state"
-					else:
+					elif self.state == "Transmission_State_2":
+						self.income_RIP_count += 1
+						cur_RIP_count = self.income_RIP_count
 						outBoundPacket = Util.create_outbound_packet(4, None, packet.SequenceNumber+1) #TODO seq num and ack num
 						if self.logging:
 							print("\n-------------PEEP Server Termination Starts--------------------\n")
@@ -177,14 +189,17 @@ class PEEPServerProtocol(StackingProtocol):
 							print("PEEP Server Side: RIP-ACK sent: Ack = %d, Checksum = (%d)"%(outBoundPacket.Acknowledgement, outBoundPacket.Checksum))
 				
 						packetBytes = outBoundPacket.__serialize__()
+						self.outBoundRIPACKPacket_4way_termination = outBoundPacket
 						self.state = "RIP_Received_State_3"
 						self.transport.write(packetBytes)
+						asyncio.get_event_loop().call_later(self.WAIT_TO_CONTINUE_TIMEOUTLIMIT, self.try_to_continue, cur_RIP_count, packetBytes)
 
+					elif self.state == "RIP_Received_State_3":
+						self.income_RIP_count += 1
+						if self.logging:
+							print("PEEP Server Side: Resent RIP-ACK!")
+						self.transport.write(self.outBoundRIPACKPacket_4way_termination.__serialize__())
 
-						# sending all the cached packets in buffer here
-						self.peeptransport.clear_databuffer_and_send_RIP(self.peeptransport.sequenceNumber)
-						
-						self.state = "RIP_sent_State_4"
 						
 
 				elif packet.Type == 4: # incoming an RIP-ACK packet
@@ -194,11 +209,12 @@ class PEEPServerProtocol(StackingProtocol):
 						self.state = "error_state"
 					else:
 						self.state = "Closing_State_5"
+						self.peeptransport.state = "Closing_State_5"
 						if self.logging:
 							print("PEEP Server Side: RIP-ACK reveived: Ack = %d, Checksum = (%d)"%(packet.Acknowledgement, packet.Checksum))
 							print("\nPEEP Server SIde: Preparing connection lose...")
+						# asyncio.get_event_loop().call_later(5, self.connection_lost, None)
 						self.connection_lost(None)
-
 
 				elif packet.Type == 5:	# incomming an Data packet
 					self.__data_packet_handler(packet)
@@ -210,5 +226,21 @@ class PEEPServerProtocol(StackingProtocol):
 
 			if self.transport == None:
 				continue
-			if self.state == "error_state":
-				self.transport.close()
+			# if self.state == "error_state":
+			# 	self.transport.close()
+
+	def try_to_continue(self, cur_RIP_count, packetBytes):
+		if cur_RIP_count == self.income_RIP_count: #no more rip is received, stable, can close
+			if self.logging:
+				print("PEEP Server Side: Continue right now!")
+			# sending all the cached packets in buffer here
+			self.peeptransport.clear_databuffer_and_send_RIP(self.peeptransport.sequenceNumber)
+						
+			self.state = "RIP_sent_State_4"
+			self.peeptransport.state = "RIP_sent_State_4"
+		else:
+			new_cur_RIP_count = self.income_RIP_count
+			if self.logging:
+				print("PEEP Client Side: Resent RIP-ACK!")
+			self.transport.write(packetBytes)
+			asyncio.get_event_loop().call_later(self.WAIT_TO_CONTINUE_TIMEOUTLIMIT, self.try_to_continue, new_cur_RIP_count, packetBytes)

@@ -19,6 +19,8 @@ class PEEPServerTransport(StackingTransport):
 	sequenceNumber = 0
 	maxAck = 0
 	ack_sendflag = False
+	outBoundRIPPacket_4way_termination = None
+	state = "RIP_sent_State_4"
 
 	def close(self):
 		pass
@@ -42,6 +44,20 @@ class PEEPServerTransport(StackingTransport):
 			self.sequenceNumber += len(cur_PEEP_Packet.Data)
 			self.window_control(cur_PEEP_Packet)
 
+	def Timeout_checker(self, retrans_packet, wrong_current_state):
+		if self.state == wrong_current_state:
+			if self.logging:
+				if retrans_packet.Type == 3:
+					print("PEEP Server Side: Wait for RIP-SYN [* Time-out *]. RIP Retransmitted: Seq = %d Checksum = (%d)"%(retrans_packet.SequenceNumber, retrans_packet.Checksum))
+				# elif retrans_packet.Type == 2:
+				# 	print("PEEP Client Side: Wait for the FIRST Data Packet [* Time-out *]. ACK Retransmitted: Seq = %d, Ack = %d, Checksum = (%d)"%(retrans_packet.SequenceNumber, retrans_packet.Acknowledgement, retrans_packet.Checksum))
+				else:
+					print("PEEP Server Side: Unconsidered case happened in Timeout_checker function [* Time-out *].")
+
+			packetBytes = retrans_packet.__serialize__()
+			self.lowerTransport().write(packetBytes)
+			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.Timeout_checker, retrans_packet, wrong_current_state)
+
 	
 	def clear_databuffer_and_send_RIP(self, seq):
 		if len(self.waitingList) != 1 or len(self.RetransmissionPacketList) != 1:
@@ -55,6 +71,8 @@ class PEEPServerTransport(StackingTransport):
 				print("\nPEEP Server Transport: ### Data Buffer is CLEAR ###")
 				print("\nPEEP Server Transport: RIP sent: Seq = %d Checksum = (%d)"%(cur_RIP_Packet.SequenceNumber, cur_RIP_Packet.Checksum))
 			self.lowerTransport().write(cur_RIP_Packet.__serialize__())
+			self.outBoundRIPPacket_4way_termination = cur_RIP_Packet
+			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.Timeout_checker, self.outBoundRIPPacket_4way_termination, "RIP_sent_State_4")
 
 
 	def clean_waitList(self):

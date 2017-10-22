@@ -24,6 +24,9 @@ class PEEPClientProtocol(StackingProtocol):
 	isMock = False
 	outBoundSYNPacket_3way_handshake = None
 	outBoundACKPacket_3way_handshake = None
+	WAIT_TO_CLOSE_TIMEOUTLIMIT = 3
+	income_RIP_count = 0
+	outBoundRIPACKPacket_4way_termination = None
 
 	def __init__(self, logging=True):
 		if logging:
@@ -38,6 +41,9 @@ class PEEPClientProtocol(StackingProtocol):
 		self.seq_expected = 0
 		self.outBoundSYNPacket_3way_handshake = None
 		self.outBoundACKPacket_3way_handshake = None
+		self.WAIT_TO_CLOSE_TIMEOUTLIMIT = 3
+		self.income_RIP_count = 0
+		self.outBoundRIPACKPacket_4way_termination = None
 
 	def set_mock_flag(self, isMock):
 		self.isMock = isMock
@@ -80,7 +86,7 @@ class PEEPClientProtocol(StackingProtocol):
 			if self.logging:
 				print("PEEP Client Side: Error: State Error! Expecting Initial_SYN_State but getting %s"%self.state)
 			self.state = "error_state"
-			self.transport.close()
+			# self.transport.close()
 		else:
 			self._callback = callback
 			self.current_seq_update(random.randint(0, 5000))
@@ -103,9 +109,9 @@ class PEEPClientProtocol(StackingProtocol):
 			print("PEEP Client Side: Connection Lost...")
 
 	def __data_packet_handler(self,packet):
-		if self.state != "Transmission_State_2":
+		if self.state != "Transmission_State_2" and self.state != "Transmission_Remain_Data_State_2":
 			if self.logging:
-				print("PEEP Client Side: Error: State Error! Expecting Transmission_State_2 but getting %s" % self.state)
+				print("PEEP Client Side: Error: State Error! Expecting Transmission_State_2 or Transmission_Remain_Data_State_2 but getting %s" % self.state)
 			self.state = "error_state"
 		else:
 			if self.logging:
@@ -176,29 +182,42 @@ class PEEPClientProtocol(StackingProtocol):
 					self.__ack_handler(packet.Acknowledgement)
 
 				elif packet.Type == 3: # incoming an RIP packet
-					if self.state != "Transmission_State_2":
+					if self.state != "Transmission_Remain_Data_State_2" and self.state != "Closing_State_3":
 						if self.logging:
-							print("PEEP Client Side: Error: State Error! Expecting Transmission_State_2 but getting %s"%self.state)
+							print("PEEP Client Side: Error: State Error! Expecting Transmission_Remain_Data_State_2 or Closing_State_3 but getting %s"%self.state)
 						self.state = "error_state"
-					else:
+					elif self.state == "Transmission_Remain_Data_State_2":
+						self.income_RIP_count += 1
+						cur_RIP_count = self.income_RIP_count
 						outBoundPacket = Util.create_outbound_packet(4, None, packet.SequenceNumber+1) #TODO seq num and ack num
 						if self.logging:
 							print("PEEP Client Side: RIP reveived: Seq = %d, Checksum = (%d)"%(packet.SequenceNumber, packet.Checksum))
 							print("PEEP Client Side: RIP-ACK sent: Ack = %d, Checksum = (%d)"%(outBoundPacket.Acknowledgement, outBoundPacket.Checksum))
 							print("PEEP Client Side: Preparing to lose connection")
 						packetBytes = outBoundPacket.__serialize__()
+						self.outBoundRIPACKPacket_4way_termination = outBoundPacket
 						self.state = "Closing_State_3"
 						self.transport.write(packetBytes)
+						# asyncio.get_event_loop().call_later(self.WAIT_TO_CLOSE_TIMEOUTLIMIT, self.try_to_close, cur_RIP_count, packetBytes)
 						self.connection_lost(None)
+						
+					elif self.state == "Closing_State_3": 
+						self.income_RIP_count += 1
+						if self.logging:
+							print("PEEP Client Side: Resent last RIP-ACK!")
+						self.transport.write(self.outBoundRIPACKPacket_4way_termination.__serialize__())
+						
 
 				elif packet.Type == 4: # incoming an RIP-ACK packet
 					if self.state != "Transmission_State_2":
 						if self.logging:
 							print("PEEP Client Side: Error: State Error! Expecting Transmission_State_2 but getting %s"%self.state)
-						self.state = "error_state"
+						# self.state = "error_state"
 					else:
 						if self.logging:
 							print("PEEP Client Side: RIP-ACK received: Ack = %d, Checksum = (%d), May receiving more data packets"%(packet.Acknowledgement, packet.Checksum))
+						self.state = "Transmission_Remain_Data_State_2"
+						self.peeptransport.state = "Transmission_Remain_Data_State_2"
 							
 
 				elif packet.Type == 5:	# incomming an Data packet
@@ -212,9 +231,21 @@ class PEEPClientProtocol(StackingProtocol):
 
 			if self.transport == None:
 				continue
-			if self.state == "error_state":
-				self.transport.close()
+			# if self.state == "error_state":
+			# 	self.transport.close()
 
+	def try_to_close(self, cur_RIP_count, packetBytes):
+		if cur_RIP_count == self.income_RIP_count: #no more rip is received, stable, can close
+			if self.logging:
+				print("PEEP Client Side: Closing right now!")
+			self.state = "Closing_State_3"
+			self.connection_lost(None)
+		else:
+			new_cur_RIP_count = self.income_RIP_count
+			if self.logging:
+				print("PEEP Client Side: Resent last RIP-ACK!")
+			self.transport.write(packetBytes)
+			asyncio.get_event_loop().call_later(self.WAIT_TO_CLOSE_TIMEOUTLIMIT, self.try_to_close, new_cur_RIP_count, packetBytes)
 
 	def callbackForUserVCInput(self):
 		answer = input("Client Side: Please input the verification code: ")
