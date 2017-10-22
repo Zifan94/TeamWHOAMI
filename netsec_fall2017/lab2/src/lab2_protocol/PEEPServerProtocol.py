@@ -17,11 +17,14 @@ from collections import OrderedDict
 
 class PEEPServerProtocol(StackingProtocol):
 	state = "SYN_ACK_State_0"
+	TIMEOUTLIMIT = 1
 	data_chunck_dict = None
 	peeptransport = None
 	seq_expected = 0
 	sequenceNumber = 0
 	isMock = False
+	timeout_flag = True
+	outBoundSYNACKPacket_3way_handshake = None
 
 	def __init__(self, logging=True):
 		if logging:
@@ -34,6 +37,8 @@ class PEEPServerProtocol(StackingProtocol):
 		self.data_chunck_dict = {0: ""}
 		self.seq_expected = 0
 		self.isMock = False
+		self.timeout_flag = True
+		self.outBoundSYNACKPacket_3way_handshake = None
 
 	def set_mock_flag(self, isMock):
 		self.isMock = isMock
@@ -52,6 +57,27 @@ class PEEPServerProtocol(StackingProtocol):
 		self.transport = None
 		if self.logging:
 			print("PEEP Server Side: Connection Lost...")
+
+	def timeout_checker(self, retrans_packet, wrong_current_state):
+		if self.state == wrong_current_state:
+			if self.logging:
+				if retrans_packet.Type == 1:
+					print("PEEP Client Side: Wait for ACK [* Time-out *]. SYN-ACK Retransmitted: Seq = %d, Ack = %d, Checksum = (%d)"%(retrans_packet.SequenceNumber, retrans_packet.Acknowledgement, retrans_packet.Checksum))
+				else:
+					print("PEEP Client Side: Unconsidered case happened in timeout_checker function [* Time-out *].")
+
+			packetBytes = retrans_packet.__serialize__()
+			self.transport.write(packetBytes)
+			asyncio.get_event_loop().call_later(self.TIMEOUTLIMIT, self.timeout_checker, retrans_packet, wrong_current_state)
+
+
+	def set_timeout_flag(self, flag): #Only used in UnitTest to turn off timeout_flag
+		self.timeout_flag = flag
+		if self.logging:
+			if self.timeout_flag == True:
+				print("PEEP Server Side: Time-out Flag ON!")
+			else:
+				print("PEEP Server Side: Time-out Flag OFF!")
 
 	def __data_packet_handler(self,packet):
 		if self.state != "Transmission_State_2":
@@ -111,7 +137,11 @@ class PEEPServerProtocol(StackingProtocol):
 							print("PEEP Server Side: SYN-ACK sent: Seq = %d, Ack = %d, Checksum = (%d)"%(outBoundPacket.SequenceNumber, outBoundPacket.Acknowledgement, outBoundPacket.Checksum))
 						packetBytes = outBoundPacket.__serialize__()
 						self.state = "SYN_State_1"
+						self.outBoundSYNACKPacket_3way_handshake = outBoundPacket
 						self.transport.write(packetBytes)
+
+						if self.timeout_flag == True:
+							asyncio.get_event_loop().call_later(self.TIMEOUTLIMIT, self.timeout_checker, self.outBoundSYNACKPacket_3way_handshake, "SYN_State_1")
 
 				elif packet.Type == 2:	# incoming an ACK handshake packet
 					if self.state != "SYN_State_1" and self.state != "Transmission_State_2" and self.state != "RIP_Received_State_3":
