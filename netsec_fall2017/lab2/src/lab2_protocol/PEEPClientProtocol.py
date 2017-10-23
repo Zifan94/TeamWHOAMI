@@ -15,13 +15,15 @@ from collections import OrderedDict
 
 class PEEPClientProtocol(StackingProtocol):
 	state = "Initial_SYN_State_0"
-	TIMEOUTLIMIT = 7
+	TIMEOUTLIMIT = 1
 	timeout_flag = True
 	data_chunck_dict = None
 	peeptransport = None
 	sequenceNumber = 0
 	seq_expected = 0
 	isMock = False
+	outBoundSYNPacket_3way_handshake = None
+	outBoundACKPacket_3way_handshake = None
 
 	def __init__(self, logging=True):
 		if logging:
@@ -34,6 +36,8 @@ class PEEPClientProtocol(StackingProtocol):
 		self.data_chunck_dict = {}
 		self.isMock = False
 		self.seq_expected = 0
+		self.outBoundSYNPacket_3way_handshake = None
+		self.outBoundACKPacket_3way_handshake = None
 
 	def set_mock_flag(self, isMock):
 		self.isMock = isMock
@@ -47,17 +51,28 @@ class PEEPClientProtocol(StackingProtocol):
 		self.transport = transport
 		self.send_request_packet()
 
-	def timeout_checker(self):
-		if self.state == "SYN_ACK_State_1":
+	def timeout_checker(self, retrans_packet, wrong_current_state):
+		if self.state == wrong_current_state:
 			if self.logging:
-				print("PEEP Client Side: Time-out. Close Connection.")
-			self.state = "error_state"
-			self.transport.close()
+				if retrans_packet.Type == 0:
+					print("PEEP Client Side: Wait for ACK-SYN [* Time-out *]. SYN Retransmitted: Seq = %d, Checksum = (%d)"%(retrans_packet.SequenceNumber, retrans_packet.Checksum))
+				elif retrans_packet.Type == 2:
+					print("PEEP Client Side: Wait for the FIRST Data Packet [* Time-out *]. ACK Retransmitted: Seq = %d, Ack = %d, Checksum = (%d)"%(retrans_packet.SequenceNumber, retrans_packet.Acknowledgement, retrans_packet.Checksum))
+				else:
+					print("PEEP Client Side: Unconsidered case happened in timeout_checker function [* Time-out *].")
+
+			packetBytes = retrans_packet.__serialize__()
+			self.transport.write(packetBytes)
+			asyncio.get_event_loop().call_later(self.TIMEOUTLIMIT, self.timeout_checker, retrans_packet, wrong_current_state)
+
 
 	def set_timeout_flag(self, flag): #Only used in UnitTest to turn off timeout_flag
 		self.timeout_flag = flag
 		if self.logging:
-			print("PEEP Client Side: Time-out Flag OFF!")
+			if self.timeout_flag == True:
+				print("PEEP Client Side: Time-out Flag ON!")
+			else:
+				print("PEEP Client Side: Time-out Flag OFF!")
 
 	def send_request_packet(self, callback=None):
 		#print("Client: %s"%self.state)
@@ -74,10 +89,11 @@ class PEEPClientProtocol(StackingProtocol):
 				print("PEEP Client Side: SYN sent: Seq = %d, Checksum = (%d)"%(outBoundPacket.SequenceNumber, outBoundPacket.Checksum))
 			packetBytes = outBoundPacket.__serialize__()
 			self.state = "SYN_ACK_State_1"
+			self.outBoundSYNPacket_3way_handshake = outBoundPacket
 			self.transport.write(packetBytes)
 
 			if self.timeout_flag == True:
-				asyncio.get_event_loop().call_later(self.TIMEOUTLIMIT, self.timeout_checker)
+				asyncio.get_event_loop().call_later(self.TIMEOUTLIMIT, self.timeout_checker, self.outBoundSYNPacket_3way_handshake, "Initial_SYN_State_0")
 
 	def connection_lost(self, exc=None):
 		if self.isMock == False:
@@ -97,12 +113,13 @@ class PEEPClientProtocol(StackingProtocol):
 
 			# if packet.Acknowledgement != None:
 			# 	self.__ack_handler(packet.Acknowledgement)
+			if (packet.SequenceNumber + len(packet.Data)) == self.seq_expected:
+				self.peeptransport.ack_send_updater(self.seq_expected)
 
 			if packet.SequenceNumber == self.seq_expected:
 				self.seq_expected = packet.SequenceNumber+len(packet.Data)
 				self.peeptransport.ack_send_updater(self.seq_expected)
 				self.data_chunck_dict.update({packet.SequenceNumber: packet.Data})
-				# TODO Windows Control
 				self.higherProtocol().data_received(packet.Data)
 
 	def __ack_handler(self,ack):
@@ -148,6 +165,7 @@ class PEEPClientProtocol(StackingProtocol):
 
 						packetBytes = outBoundPacket.__serialize__()
 						self.state = "Transmission_State_2"
+						self.outBoundACKPacket_3way_handshake = outBoundPacket
 						self.transport.write(packetBytes)
 						if self.logging:
 							print("PEEP Client Side: ### THREE-WAY HANDSHAKE established ###")
