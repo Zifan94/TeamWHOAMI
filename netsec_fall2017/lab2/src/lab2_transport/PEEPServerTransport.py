@@ -8,9 +8,9 @@ import asyncio
 class PEEPServerTransport(StackingTransport):
 	DATA_CHUNK_SIZE = 1024 # use 10 for test!!!
 	# ACK_TIME_INTERVAL = 0.5
-	WINDOWS_SIZE = 10
+	WINDOWS_SIZE = 5
 	processing_packet = 0
-	TIME_OUT_LIMIE = 1
+	TIME_OUT_LIMIE = 0.5
 	CLEAR_BUFFER_TIME_LIMIT = 0.5
 	logging = True
 	RetransmissionPacketList = {0: ""}
@@ -23,9 +23,12 @@ class PEEPServerTransport(StackingTransport):
 	receiving_Flag = True
 	pass_close = False
 	first_time_close = True
-	WAIT_BEFORE_CLOSE = 20
+	WAIT_BEFORE_CLOSE = 5
 	RIP_ACK_RECV_FlAG = False
 	RIP_PKT = None
+
+	def Time(self,index):
+		return 0.1+0.1*index
 
 	def close(self):
 		if self.pass_close == False:
@@ -120,7 +123,7 @@ class PEEPServerTransport(StackingTransport):
 			if self.logging:
 				print("PEEP Server Transport: Seq = [%s] PEEP Packets written!\n" % cur_PEEP_Packet.SequenceNumber)
 			self.lowerTransport().write(cur_PEEP_Packet.__serialize__())
-			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.retransmission_checker, ackNumber)
+			asyncio.get_event_loop().call_later(self.Time(self.ackList.index(ackNumber)), self.retransmission_checker, ackNumber)
 	
 
 	def window_control(self, packet=None):
@@ -134,7 +137,7 @@ class PEEPServerTransport(StackingTransport):
 			if self.logging:
 				print("PEEP Server Transport: Packets ack = [%s] not received after TIMEOUT, Retransmission...." %seq)
 			self.lowerTransport().write(self.RetransmissionPacketList[seq].__serialize__())
-			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.retransmission_checker, seq)
+			asyncio.get_event_loop().call_later(self.Time(self.ackList.index(seq)), self.retransmission_checker, seq)
 
 
 	def ack_received(self,ack):
@@ -142,6 +145,8 @@ class PEEPServerTransport(StackingTransport):
 			if self.logging: print("PEEP Client Transport: Ignore a received ACK = %d"% ack)
 			return
 		if self.logging:	print("PEEP Server Transport: ACK received, Ack = %d" % ack)
+		if len(self.ackList) == 1:
+			return
 		while (self.ackList[1] < ack):
 			del self.RetransmissionPacketList[self.ackList[1]]
 			del self.ackList[1]
