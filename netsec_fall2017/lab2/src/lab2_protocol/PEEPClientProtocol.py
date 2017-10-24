@@ -25,6 +25,9 @@ class PEEPClientProtocol(StackingProtocol):
 	outBoundSYNPacket_3way_handshake = None
 	outBoundACKPacket_3way_handshake = None
 
+	CONNECTION_LOSE_TIME_LIMIT = 15
+	prepare_connection_lose_count_down = False
+
 	def __init__(self, logging=True):
 		if logging:
 			print("PEEP Client Side: Init Compelete...")
@@ -38,6 +41,8 @@ class PEEPClientProtocol(StackingProtocol):
 		self.seq_expected = 0
 		self.outBoundSYNPacket_3way_handshake = None
 		self.outBoundACKPacket_3way_handshake = None
+		self.CONNECTION_LOSE_TIME_LIMIT = 15
+		self.prepare_connection_lose_count_down = False
 
 	def set_mock_flag(self, isMock):
 		self.isMock = isMock
@@ -103,10 +108,10 @@ class PEEPClientProtocol(StackingProtocol):
 			print("PEEP Client Side: Connection Lost...")
 
 	def __data_packet_handler(self,packet):
-		if self.state != "Transmission_State_2":
+		if self.state != "Transmission_State_2" or self.peeptransport.receiving_Flag == False:
 			if self.logging:
-				print("PEEP Client Side: Error: State Error! Expecting Transmission_State_2 but getting %s" % self.state)
-			self.state = "error_state"
+				print("PEEP Client Side: Error: State Error! or Client side already sent RIP so will reject this Packet")
+			# self.state = "error_state"
 		else:
 			if self.logging:
 				print("PEEP Client Side: Data Chunck reveived: Seq = %d, Checksum = (%d)" % (packet.SequenceNumber, packet.Checksum))
@@ -175,30 +180,52 @@ class PEEPClientProtocol(StackingProtocol):
 				elif packet.Type == 2 and self.state == "Transmission_State_2": # receiving ACK back
 					self.__ack_handler(packet.Acknowledgement)
 
+
 				elif packet.Type == 3: # incoming an RIP packet
-					if self.state != "Transmission_State_2":
+					if self.state != "Transmission_State_2" and self.state != "RIP_Received_State_3":
 						if self.logging:
-							print("PEEP Client Side: Error: State Error! Expecting Transmission_State_2 but getting %s"%self.state)
-						self.state = "error_state"
+							print("PEEP Client Side: Error: State Error! Expecting Transmission_State_2 or RIP_Received_State_3 but getting %s"%self.state)
+						# self.state = "error_state"
 					else:
+						self.peeptransport.pass_close = True
 						outBoundPacket = Util.create_outbound_packet(4, None, packet.SequenceNumber+1) #TODO seq num and ack num
 						if self.logging:
+							print("\n-------------PEEP Client Protocol Termination Starts--------------------\n")
 							print("PEEP Client Side: RIP reveived: Seq = %d, Checksum = (%d)"%(packet.SequenceNumber, packet.Checksum))
 							print("PEEP Client Side: RIP-ACK sent: Ack = %d, Checksum = (%d)"%(outBoundPacket.Acknowledgement, outBoundPacket.Checksum))
-							print("PEEP Client Side: Preparing to lose connection")
+				
 						packetBytes = outBoundPacket.__serialize__()
-						self.state = "Closing_State_3"
+						self.state = "RIP_Received_State_3"
 						self.transport.write(packetBytes)
-						self.connection_lost(None)
+
+						if self.prepare_connection_lose_count_down == False:
+							if self.logging:
+								print("PEEP Client Side: connection will lost in 15s...")
+							self.prepare_connection_lose_count_down = True
+							# asyncio.get_event_loop().call_later(self.CONNECTION_LOSE_TIME_LIMIT, self.connection_lost, None) 
+							self.connection_lost(None)
+							
+				# elif packet.Type == 3: # incoming an RIP packet
+				# 	if self.state != "Transmission_State_2":
+				# 		if self.logging:
+				# 			print("PEEP Client Side: Error: State Error! Expecting Transmission_State_2 but getting %s"%self.state)
+				# 		self.state = "error_state"
+				# 	else:
+				# 		outBoundPacket = Util.create_outbound_packet(4, None, packet.SequenceNumber+1) #TODO seq num and ack num
+				# 		if self.logging:
+				# 			print("PEEP Client Side: RIP reveived: Seq = %d, Checksum = (%d)"%(packet.SequenceNumber, packet.Checksum))
+				# 			print("PEEP Client Side: RIP-ACK sent: Ack = %d, Checksum = (%d)"%(outBoundPacket.Acknowledgement, outBoundPacket.Checksum))
+				# 			print("PEEP Client Side: Preparing to lose connection")
+				# 		packetBytes = outBoundPacket.__serialize__()
+				# 		self.state = "Closing_State_3"
+				# 		self.transport.write(packetBytes)
+				# 		self.connection_lost(None)
 
 				elif packet.Type == 4: # incoming an RIP-ACK packet
-					if self.state != "Transmission_State_2":
+					if self.state == "Transmission_State_2" and self.peeptransport.RIP_SENT_FLAG == True:
 						if self.logging:
-							print("PEEP Client Side: Error: State Error! Expecting Transmission_State_2 but getting %s"%self.state)
-						self.state = "error_state"
-					else:
-						if self.logging:
-							print("PEEP Client Side: RIP-ACK received: Ack = %d, Checksum = (%d), May receiving more data packets"%(packet.Acknowledgement, packet.Checksum))
+							print("PEEP Client Side: RIP-ACK received: Ack = %d, Checksum = (%d)"%(packet.Acknowledgement, packet.Checksum))
+						self.connection_lost(None)
 							
 
 				elif packet.Type == 5:	# incomming an Data packet

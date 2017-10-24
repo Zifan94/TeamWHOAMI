@@ -19,12 +19,15 @@ class PEEPServerTransport(StackingTransport):
 	sequenceNumber = 0
 	maxAck = 0
 	ack_sendflag = False
+	RIP_SENT_FLAG = False
+	receiving_Flag = True
+	pass_close = False
 
 	def close(self):
-		pass
-		# if self.logging:	print("\n-------------PEEP Server Closed--------------------\n")
-		# asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.clear_databuffer_and_send_RIP, self.sequenceNumber)
-		# self.clear_databuffer_and_send_RIP(self.sequenceNumber)
+		if self.pass_close == False:
+			if self.logging:	
+				print("\n-------------PEEP Server Termination Starts--------------------\n")
+			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.clear_databuffer_and_send_RIP, self.sequenceNumber)
 
 
 	def write(self, data):
@@ -44,6 +47,9 @@ class PEEPServerTransport(StackingTransport):
 
 	
 	def clear_databuffer_and_send_RIP(self, seq):
+		if self.pass_close == True:
+			print("PEEP Server: Pass this phase")
+			return
 		if len(self.waitingList) != 1 or len(self.RetransmissionPacketList) != 1:
 			if self.logging:	print("PEEP Server Transport: Cleaning data buffer now ......")
 			self.clean_waitList()
@@ -55,6 +61,10 @@ class PEEPServerTransport(StackingTransport):
 				print("\nPEEP Server Transport: ### Data Buffer is CLEAR ###")
 				print("\nPEEP Server Transport: RIP sent: Seq = %d Checksum = (%d)"%(cur_RIP_Packet.SequenceNumber, cur_RIP_Packet.Checksum))
 			self.lowerTransport().write(cur_RIP_Packet.__serialize__())
+			self.RIP_SENT_FLAG = True
+			self.receiving_Flag = False
+			self.pass_close = True
+
 
 
 	def clean_waitList(self):
@@ -106,6 +116,9 @@ class PEEPServerTransport(StackingTransport):
 
 
 	def ack_received(self,ack):
+		if self.receiving_Flag == False: 
+			if self.logging: print("PEEP Client Transport: Ignore a received ACK = %d"% ack)
+			return
 		if self.logging:	print("PEEP Server Transport: ACK received, Ack = %d" % ack)
 		while (self.ackList[1] < ack):
 			del self.RetransmissionPacketList[self.ackList[1]]
