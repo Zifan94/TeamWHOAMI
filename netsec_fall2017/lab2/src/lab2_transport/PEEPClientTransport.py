@@ -5,8 +5,9 @@ from ..lab2_packets import *
 from ..lab2_Util import *
 import asyncio
 
-DATA_CHUNK_SIZE = 1024 # use 10 for test!!!
+
 class PEEPClientTransport(StackingTransport):
+	DATA_CHUNK_SIZE = 1024 # use 10 for test!!!
 	# ACK_TIME_INTERVAL = 0.5
 	WINDOWS_SIZE = 10
 	processing_packet = 0
@@ -23,7 +24,9 @@ class PEEPClientTransport(StackingTransport):
 	receiving_Flag = True
 	pass_close = False
 	first_time_close = True
-	WAIT_BEFORE_CLOSE = 10
+	WAIT_BEFORE_CLOSE = 20
+	RIP_ACK_RECV_FlAG = False
+	RIP_PKT = None
 
 	def close(self):
 		if self.pass_close == False:
@@ -41,15 +44,15 @@ class PEEPClientTransport(StackingTransport):
 
 	def write(self, data):
 		#this will be the data from the upper layer
-		size = int(len(data)/DATA_CHUNK_SIZE)
-		if len(data)%DATA_CHUNK_SIZE != 0: size+=1
+		size = int(len(data)/self.DATA_CHUNK_SIZE)
+		if len(data)%self.DATA_CHUNK_SIZE != 0: size+=1
 		if self.logging:
 			print("\nPEEP Client Transport: data length is [%s], and divided into [%s] PEEP packets"%(len(data), size))
 
 		for i in range(1, size+1):
 			if self.logging:
 				print("PEEP Client Transport: packing seq = [%s] PEEP packet..." % self.sequenceNumber)
-			cur_Data_Chuck = (data[(i-1)*DATA_CHUNK_SIZE : i*DATA_CHUNK_SIZE])
+			cur_Data_Chuck = (data[(i-1)*self.DATA_CHUNK_SIZE : i*self.DATA_CHUNK_SIZE])
 			cur_PEEP_Packet = Util.create_outbound_packet(5, self.sequenceNumber, None, cur_Data_Chuck)
 			self.sequenceNumber += len(cur_PEEP_Packet.Data)
 			self.window_control(cur_PEEP_Packet)
@@ -73,7 +76,16 @@ class PEEPClientTransport(StackingTransport):
 			self.RIP_SENT_FLAG = True
 			self.receiving_Flag = False
 			self.pass_close = True
+			self.RIP_PKT = cur_RIP_Packet
+			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.Timeout_checker, self.RIP_PKT)
 			# self.lowerTransport.close()
+
+	def Timeout_checker(self, RIP_packet):
+		if self.RIP_ACK_RECV_FlAG == False:
+			if self.logging:
+				print("\nPEEP Client Side: Wait for RIP-ACK [* Time-out *]. RIP Retransmitted: Seq = %d Checksum =(%d)"%(RIP_packet.SequenceNumber, RIP_packet.Checksum))
+			self.lowerTransport().write(RIP_packet.__serialize__())
+			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.Timeout_checker, self.RIP_PKT)
 
 
 	def clean_waitList(self):

@@ -185,10 +185,20 @@ class PEEPServerProtocol(StackingProtocol):
 						packetBytes = outBoundPacket.__serialize__()
 						self.state = "RIP_Received_State_3"
 						self.transport.write(packetBytes)
+						self.transport.write(packetBytes)
+						self.transport.write(packetBytes)
+						self.transport.write(packetBytes)
+						self.transport.write(packetBytes)
+						self.transport.write(packetBytes)
+						self.transport.write(packetBytes)
+						self.transport.write(packetBytes)
+						self.transport.write(packetBytes)
+						self.transport.write(packetBytes)
+						self.transport.write(packetBytes)
 
 						if self.prepare_connection_lose_count_down == False:
 							if self.logging:
-								print("PEEP Server Side: connection will lost in 15s...")
+								print("PEEP Server Side: sent 10 RIP-ACK at once...")
 							self.prepare_connection_lose_count_down = True
 							# asyncio.get_event_loop().call_later(self.CONNECTION_LOSE_TIME_LIMIT, self.connection_lost, None) 
 							self.connection_lost(None)
@@ -196,6 +206,7 @@ class PEEPServerProtocol(StackingProtocol):
 
 				elif packet.Type == 4: # incoming an RIP-ACK packet
 					if self.state == "Transmission_State_2" and self.peeptransport.RIP_SENT_FLAG == True:
+						self.peeptransport.RIP_ACK_RECV_FlAG = True
 						if self.logging:
 							print("PEEP Server Side: RIP-ACK received: Ack = %d, Checksum = (%d)"%(packet.Acknowledgement, packet.Checksum))
 						self.connection_lost(None)
