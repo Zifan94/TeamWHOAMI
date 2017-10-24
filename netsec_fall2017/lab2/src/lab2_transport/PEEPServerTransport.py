@@ -28,6 +28,8 @@ class PEEPServerTransport(StackingTransport):
 			if self.logging:	
 				print("\n-------------PEEP Server Termination Starts--------------------\n")
 			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.clear_databuffer_and_send_RIP, self.sequenceNumber)
+		else:
+			self.lowerTransport.close()
 
 
 	def write(self, data):
@@ -64,6 +66,7 @@ class PEEPServerTransport(StackingTransport):
 			self.RIP_SENT_FLAG = True
 			self.receiving_Flag = False
 			self.pass_close = True
+			self.lowerTransport.close()
 
 
 

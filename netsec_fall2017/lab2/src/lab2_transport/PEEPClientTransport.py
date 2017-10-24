@@ -28,6 +28,8 @@ class PEEPClientTransport(StackingTransport):
 			if self.logging:	
 				print("\n-------------PEEP Client Termination Starts--------------------\n")
 			asyncio.get_event_loop().call_later(self.TIME_OUT_LIMIE, self.clear_databuffer_and_send_RIP, self.sequenceNumber)
+		else:
+			self.lowerTransport.close()
 
 	def write(self, data):
 		#this will be the data from the upper layer
@@ -63,6 +65,7 @@ class PEEPClientTransport(StackingTransport):
 			self.RIP_SENT_FLAG = True
 			self.receiving_Flag = False
 			self.pass_close = True
+			self.lowerTransport.close()
 
 
 	def clean_waitList(self):
