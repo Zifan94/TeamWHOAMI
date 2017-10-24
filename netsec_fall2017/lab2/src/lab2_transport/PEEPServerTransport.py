@@ -10,7 +10,7 @@ class PEEPServerTransport(StackingTransport):
 	# ACK_TIME_INTERVAL = 0.5
 	WINDOWS_SIZE = 10
 	processing_packet = 0
-	TIME_OUT_LIMIE = 1
+	TIME_OUT_LIMIE = 0.2
 	CLEAR_BUFFER_TIME_LIMIT = 0.5
 	logging = True
 	RetransmissionPacketList = {0: ""}
@@ -23,7 +23,7 @@ class PEEPServerTransport(StackingTransport):
 	receiving_Flag = True
 	pass_close = False
 	first_time_close = True
-	WAIT_BEFORE_CLOSE = 20
+	WAIT_BEFORE_CLOSE = 1
 	RIP_ACK_RECV_FlAG = False
 	RIP_PKT = None
 
@@ -142,6 +142,8 @@ class PEEPServerTransport(StackingTransport):
 			if self.logging: print("PEEP Client Transport: Ignore a received ACK = %d"% ack)
 			return
 		if self.logging:	print("PEEP Server Transport: ACK received, Ack = %d" % ack)
+		if len(self.ackList) == 1:
+			return
 		while (self.ackList[1] < ack):
 			del self.RetransmissionPacketList[self.ackList[1]]
 			del self.ackList[1]
