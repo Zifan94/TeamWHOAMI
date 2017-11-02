@@ -26,7 +26,7 @@ class PlsKeyExchange(PacketType):
     DEFINITION_VERSION = "1.0"
     FIELDS = [
         ("Pre_Key", BUFFER),
-        ("NoncePlusOne", BUFFER),
+        ("NoncePlusOne", UINT64),
     ]
 
     @staticmethod
