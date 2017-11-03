@@ -40,14 +40,14 @@ class PLSClientProtocol(PLSProtocol):
             self.state = "error_state"
         else:
             self._callback = callback
-            nouce = random.randint(1, 2 ^ 64)
+            self.nonceC = random.randint(1, 2 ^ 64)
             certs=[] #TODO
-            outBoundPacket = PlsHello.create(nouce, certs)
+            outBoundPacket = PlsHello.create(self.nonceC, certs)
             if self.logging:
                 print("PLS Protocol: Client_Hello sent")
             packetBytes = outBoundPacket.__serialize__()
             self.state = "M1"
-            self.Client_Hello_Packet = outBoundPacket
+            self.M1 = packetBytes
             self.transport.write(packetBytes)
 
     def connection_lost(self, exc=None):

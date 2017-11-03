@@ -35,18 +35,10 @@ class PLSServerProtocol(PLSProtocol):
         if self.logging:
             print("PLS %s Protocol: Connection Lost..." % (self.Side_Indicator))
 
-    def send_Server_Hello_Packet(self, callback=None):
-        if self.state != "Initial_State_0":
-            if self.logging:
-                print(
-                    "PLS %s Protocol: Error: State Error! Expecting Initial_State_0 but getting %s" %
-                    (self.Side_Indicator, self.state))
-            self.state = "error_state"
-        else:
-            self._callback = callback
-            self.nouce = random.randint(1, 2 ^ 64)
+    def send_Server_Hello_Packet(self):
+            self.nonceS = random.randint(1, 2 ^ 64)
             certs=[] #TODO
-            outBoundPacket = PlsHello.create(self.nouce, certs)
+            outBoundPacket = PlsHello.create(self.nonceS, certs)
             if self.logging:
                 print("PLS Protocol: Server_Hello sent")
             packetBytes = outBoundPacket.__serialize__()
