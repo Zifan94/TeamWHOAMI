@@ -56,6 +56,15 @@ class PLSClientProtocol(PLSProtocol):
         if self.logging:
             print("PLS %s Protocol: Connection Lost..." % (self.Side_Indicator))
 
+    def authentication(self, certs):
+        return True;
+
+    def send_key_exchange(self):
+        self.transport.write()
+
+    def decrypt_RSA(self,Perkey):
+        return 0;
+
     def data_received(self, data):
         self._deserializer.update(data)
         for packet in self._deserializer.nextPackets():
