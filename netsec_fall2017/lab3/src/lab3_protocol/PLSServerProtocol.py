@@ -1,3 +1,5 @@
+from playground.network.packet import PacketType
+from playground.network.packet.fieldtypes import UINT64, UINT32, UINT16, UINT8, STRING, BUFFER, BOOL, LIST
 from .PLSProtocol import *
 from ..lab3_packets import *
 from .CertFactory import *
@@ -22,7 +24,7 @@ class PLSServerProtocol(PLSProtocol):
 
         if self.logging:
             print("PLS %s Protocol: Init Compelete..." % (self.Side_Indicator))
-        self._deserializer = PacketBaseType.Deserializer()
+        self._deserializer = PacketType.Deserializer()
         super().__init__
         self.transport = None
         self.state = "Initial_State_0"
@@ -31,6 +33,7 @@ class PLSServerProtocol(PLSProtocol):
         if self.logging:
             print("PLS %s Protocol: Connection Made..." % (self.Side_Indicator))
         self.transport = transport
+        self.higherTransport = StackingTransport(self.transport)
 
     def connection_lost(self, exc=None):
         self.higherProtocol().connection_lost(None)
@@ -41,11 +44,11 @@ class PLSServerProtocol(PLSProtocol):
     def send_Server_Hello_Packet(self):
             self.nonceS = random.randint(1, 2 ^ 64)
             certs=[] #TODO
-            certs.append(CertFactory.getCertsForAddr())
-
+            # certs.append(CertFactory.getCertsForAddr())
+            certs.append(b"cert server") # use fake cert for now
             outBoundPacket = PlsHello.create(self.nonceS, certs)
             if self.logging:
-                print("PLS Protocol: Server_Hello sent")
+                print("PLS %s Protocol: 2. Server_Hello sent\n"% (self.Side_Indicator))
             packetBytes = outBoundPacket.__serialize__()
             self.state = "M2"
             self.M2 = packetBytes
@@ -134,3 +137,4 @@ class PLSServerProtocol(PLSProtocol):
                             self.creat_keys()
                             if self.logging:
                                 print("PLS %s Protocol: HandShake Done!\n" % self.Side_Indicator)
+                            self.higherProtocol().connection_made(self.higherTransport)
