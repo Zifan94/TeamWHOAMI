@@ -42,7 +42,7 @@ class PLSServerProtocol(PLSProtocol):
             print("PLS %s Protocol: Connection Lost..." % (self.Side_Indicator))
 
     def send_Server_Hello_Packet(self):
-            self.nonceS = random.randint(1, 2 ^ 64)
+            self.nonceS = random.randint(1, 2 ** 64)
             certs=[] #TODO
             #certs.append(CertFactory.getCertsForAddr())
             certs.append(b"cert server") # use fake cert for now
@@ -58,10 +58,10 @@ class PLSServerProtocol(PLSProtocol):
         return True;
 
     def send_key_exchange(self):
-        self.pkC = b"hahahahahahaha 123123"
+        self.pkS = b"hahahahahahaha 123123"
         rsakey = RSA.importKey(self.publickey)
         cipher = PKCS1_OAEP.new(rsakey)
-        cipher_text = cipher.encrypt(self.pkC)
+        cipher_text = cipher.encrypt(self.pkS)
         outBoundPacket = PlsKeyExchange.create(cipher_text, self.nonceS + 1)
         packetBytes = outBoundPacket.__serialize__()
         self.state = "M4"
@@ -70,10 +70,11 @@ class PLSServerProtocol(PLSProtocol):
         if self.logging:
             print("\nPLS %s Protocol: 4. %s_PlsKeyExchange sent\n"%(self.Side_Indicator,self.Side_Indicator))
 
-    def decrypt_RSA(self,Perkey):
+    def decrypt_RSA(self, Perkey):
         privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr())
         privobj = PKCS1_OAEP.new(privobj)
         self.pkC = privobj.decrypt(Perkey)
+        # print(self.pkC)
 
     def data_received(self, data):
         self._deserializer.update(data)

@@ -13,11 +13,13 @@ class PLSProtocol(StackingProtocol):
     M3 = b""
     M4 = b""
     SHA1value = b""
-    nonceC = 0
-    nonceS = 0
+    nonceC = UINT64(0)
+    nonceS = UINT64(0)
     pkC = b""
     pkS = b""
     publickey = 0
+    Side_Indicator = ""
+    logging = False
 
     # TODO with professor's guide
     def extract_pulickey(self,certs):
@@ -31,20 +33,25 @@ class PLSProtocol(StackingProtocol):
         self.SHA1value = sha1.digest()
         outBoundPacket = PlsHandshakeDone.create(self.SHA1value)
         self.transport.write(outBoundPacket.__serialize__())
+        if self.logging:
+            print("PLS %s Protocol: handshake Done send!" % self.Side_Indicator)
 
     # handshake done, begin create keys
     def creat_keys(self):
+        if self.logging:
+            print("PLS %s Protocol: Begin create keys..." % self.Side_Indicator)
         seed = b"PLS1.0" + bytes(self.nonceC) + bytes(self.nonceS) + self.pkC + self.pkS
-        hash = hashlib.sha1()
+        # print(self.nonceC,"\n",self.nonceS,"\n",self.pkC,"\n",self.pkS)
         block_0 = hashlib.sha1(seed).digest()
         block_1 = hashlib.sha1(block_0).digest()
         block_2 = hashlib.sha1(block_1).digest()
         block_3 = hashlib.sha1(block_2).digest()
         block_4 = hashlib.sha1(block_3).digest()
-        print(hashlib.sha1(block_3).block_size)
-        self.Ekc = block_4[0:127]
-        self.Eks = block_4[128:255]
-        self.IVc = block_4[256:383]
-        self.IVs = block_4[384:511]
-        self.MKc = block_4[512:639]
-        self.MKs = block_4[640:767]
+        block = block_0 + block_1 + block_2 + block_3 + block_4
+        self.Ekc = block[0:15]
+        self.Eks = block[16:31]
+        self.IVc = block[32:47]
+        self.IVs = block[48:63]
+        self.MKc = block[64:78]
+        self.MKs = block[80:95]
+        # print(self.Ekc,' ',self.Eks,' ',self.IVc,' ',self.IVs,' ',self.MKc,' ',self.MKs)

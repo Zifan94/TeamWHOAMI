@@ -47,7 +47,7 @@ class PLSClientProtocol(PLSProtocol):
             self.state = "error_state"
         else:
             self._callback = callback
-            self.nonceC = random.randint(1, 2 ^ 64)
+            self.nonceC = random.randint(1, 2 ** 64)
             certs=[]
             #certs.append(CertFactory.getCertsForAddr()) # TODO
             certs.append(b"cert client") # use fake cert for now
@@ -81,10 +81,11 @@ class PLSClientProtocol(PLSProtocol):
         self.M3 = packetBytes
         self.transport.write(packetBytes)
 
-    def decrypt_RSA(self,Perkey):
+    def decrypt_RSA(self, Perkey):
         privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr())
         privobj = PKCS1_OAEP.new(privobj)
         self.pkS = privobj.decrypt(Perkey)
+        # print(self.pkS)
 
 
     def data_received(self, data):
