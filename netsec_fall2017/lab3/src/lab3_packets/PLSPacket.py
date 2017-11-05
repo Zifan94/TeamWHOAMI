@@ -12,10 +12,10 @@ class PlsHello(PacketType):
     ]
 
     @staticmethod
-    def create(Nouce, Certs):
+    def create(Nonce, Certs):
         newPacket = PlsHello()
 
-        newPacket.Nouce = Nouce
+        newPacket.Nonce = Nonce
         newPacket.Certs = Certs
 
         return newPacket
