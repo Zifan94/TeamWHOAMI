@@ -8,23 +8,26 @@ from playground.network.testing import MockTransportToStorageStream as MockTrans
 from playground.network.testing import MockTransportToProtocol
 
 import asyncio
+import random
+import base64
+import playground
 
 
 def basicUnitTestForUtil(loggingFlag):
 
 	# test for create_PlsHello
-	# packet1 = PlsHello.create(11, [b"123", b"4434"])
-	# print("sda")
-	# print(packet1.Nonce)
-	# print("sda")
-	# assert packet1.Nonce == 11
-	# assert packet1.Certs == [b"123", b"4434"]
-	# if loggingFlag == True: print ("- test for PlsHello.create SUCCESS")
+	nonceC = random.randint(1, 2 ^ 64)
+	certs = []
+	certs.append(b"certsss")
+	packet1 = PlsHello.create(nonceC, certs)
+	assert packet1.Nonce == nonceC
+	assert packet1.Certs == certs
+	if loggingFlag == True: print ("- test for PlsHello.create SUCCESS")
 
 	# test for PlsKeyExchange
-	packet1 = PlsKeyExchange.create(b"prekey", b"1111")
+	packet1 = PlsKeyExchange.create(b"prekey", 11)
 	assert packet1.Pre_Key == b"prekey"
-	assert packet1.NoncePlusOne == b"1111"
+	assert packet1.NoncePlusOne == 11
 	if loggingFlag == True: print ("- test for PlsKeyExchange.create SUCCESS")
 
 	# test for PlsHandshakeDone

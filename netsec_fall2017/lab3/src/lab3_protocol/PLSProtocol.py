@@ -21,7 +21,8 @@ class PLSProtocol(StackingProtocol):
 
     # TODO with professor's guide
     def extract_pulickey(self,certs):
-        self.publickey = CertFactory.getPublicKeyForAddr()
+        # self.publickey = CertFactory.getPublicKeyForAddr()
+        self.publickey = 999 # use mock key for now
 
 
     def send_handshake_done(self):

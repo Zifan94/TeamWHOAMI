@@ -1,3 +1,5 @@
+from playground.network.packet import PacketType
+from playground.network.packet.fieldtypes import UINT64, UINT32, UINT16, UINT8, STRING, BUFFER, BOOL, LIST
 from .PLSProtocol import *
 from ..lab3_packets import *
 from .CertFactory import *
@@ -11,6 +13,7 @@ import random
 import asyncio
 
 
+
 class PLSClientProtocol(PLSProtocol):
 
     state = "Not_Init_State"
@@ -22,7 +25,7 @@ class PLSClientProtocol(PLSProtocol):
 
         if self.logging:
             print("PLS %s Protocol: Init Compelete..." % (self.Side_Indicator))
-        self._deserializer = PacketBaseType.Deserializer()
+        self._deserializer = PacketType.Deserializer()
         super().__init__
         self.transport = None
         self.state = "Initial_State_0"
@@ -31,6 +34,8 @@ class PLSClientProtocol(PLSProtocol):
         if self.logging:
             print("PLS %s Protocol: Connection Made..." % (self.Side_Indicator))
         self.transport = transport
+        self.higherTransport = StackingTransport(self.transport)
+
         self.send_Client_Hello_Packet()
 
     def send_Client_Hello_Packet(self, callback=None):
@@ -44,10 +49,11 @@ class PLSClientProtocol(PLSProtocol):
             self._callback = callback
             self.nonceC = random.randint(1, 2 ^ 64)
             certs=[]
-            certs.append(CertFactory.getCertsForAddr()) # TODO
+            # certs.append(CertFactory.getCertsForAddr()) # TODO
+            certs.append(b"cert client") # use fake cert for now
             outBoundPacket = PlsHello.create(self.nonceC, certs)
             if self.logging:
-                print("PLS Protocol: Client_Hello sent")
+                print("\nPLS %s Protocol: 1. Client_Hello sent"%(self.Side_Indicator))
             packetBytes = outBoundPacket.__serialize__()
             self.state = "M1"
             self.M1 = packetBytes
@@ -64,10 +70,14 @@ class PLSClientProtocol(PLSProtocol):
 
     def send_key_exchange(self):
         self.pkC = b"This is key??!"
+        print("get")
         rsakey = RSA.importKey(self.publickey)
+        print("get")
         cipher = PKCS1_OAEP.new(rsakey)
         cipher_text = cipher.encrypt(self.pkC)
-        outBoundPacket = PlsKeyExchange.create(cipher_text,self.nonceS+1)
+        outBoundPacket = PlsKeyExchange.create(cipher_text, self.nonceS+1)
+        if self.logging:
+            print("\nPLS %s Protocol: 3. Client_PlsKeyExchange sent\n"%(self.Side_Indicator))
         packetBytes = outBoundPacket.__serialize__()
         self.state = "M3"
         self.M3 = packetBytes
@@ -144,3 +154,4 @@ class PLSClientProtocol(PLSProtocol):
                             self.creat_keys()
                             if self.logging:
                                 print("PLS %s Protocol: HandShake Done!\n" % self.Side_Indicator)
+                            self.higherProtocol().connection_made(self.higherTransport)

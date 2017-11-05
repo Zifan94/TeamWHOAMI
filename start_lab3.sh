@@ -11,6 +11,16 @@ case $1 in
                 python3 -m netsec_fall2017.lab3.lab3_test.UnitTest
                 exit
             ;;
+
+            "server" )
+                python3 -m netsec_fall2017.lab3_test.VerificationCodeServerProtocol
+                exit
+            ;;
+
+            "client" )
+                python3 -m netsec_fall2017.lab3_test.VerificationCodeClientProtocol
+                exit
+            ;;
             * ) echo "Incorrect args"
         esac
         exit
