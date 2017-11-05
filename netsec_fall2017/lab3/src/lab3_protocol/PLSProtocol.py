@@ -40,7 +40,7 @@ class PLSProtocol(StackingProtocol):
     def creat_keys(self):
         if self.logging:
             print("PLS %s Protocol: Begin create keys..." % self.Side_Indicator)
-        seed = b"PLS1.0" + bytes(self.nonceC) + bytes(self.nonceS) + self.pkC + self.pkS
+        seed = b"PLS1.0" + self.nonceC.to_bytes(8,byteorder='big') + self.nonceS.to_bytes(8,byteorder='big') + self.pkC + self.pkS
         # print(self.nonceC,"\n",self.nonceS,"\n",self.pkC,"\n",self.pkS)
         block_0 = hashlib.sha1(seed).digest()
         block_1 = hashlib.sha1(block_0).digest()
@@ -54,4 +54,4 @@ class PLSProtocol(StackingProtocol):
         self.IVs = block[48:63]
         self.MKc = block[64:78]
         self.MKs = block[80:95]
-        # print(self.Ekc,' ',self.Eks,' ',self.IVc,' ',self.IVs,' ',self.MKc,' ',self.MKs)
+        print(self.Ekc,' ',self.Eks,' ',self.IVc,' ',self.IVs,' ',self.MKc,' ',self.MKs)
