@@ -47,9 +47,9 @@ class PLSClientProtocol(PLSProtocol):
             self.state = "error_state"
         else:
             self._callback = callback
-            self.nonceC = random.randint(1, 2 ^ 64)
+            self.nonceC = random.randint(1, 2 ** 64)
             certs=[]
-            # certs.append(CertFactory.getCertsForAddr()) # TODO
+            #certs.append(CertFactory.getCertsForAddr()) # TODO
             certs.append(b"cert client") # use fake cert for now
             outBoundPacket = PlsHello.create(self.nonceC, certs)
             if self.logging:
@@ -70,23 +70,22 @@ class PLSClientProtocol(PLSProtocol):
 
     def send_key_exchange(self):
         self.pkC = b"This is key??!"
-        print("get")
         rsakey = RSA.importKey(self.publickey)
-        print("get")
         cipher = PKCS1_OAEP.new(rsakey)
         cipher_text = cipher.encrypt(self.pkC)
-        outBoundPacket = PlsKeyExchange.create(cipher_text, self.nonceS+1)
+        outBoundPacket = PlsKeyExchange.create(cipher_text, self.nonceC+1)
         if self.logging:
-            print("\nPLS %s Protocol: 3. Client_PlsKeyExchange sent\n"%(self.Side_Indicator))
+            print("\nPLS %s Protocol: 3. %s_PlsKeyExchange sent\n"%(self.Side_Indicator,self.Side_Indicator))
         packetBytes = outBoundPacket.__serialize__()
         self.state = "M3"
         self.M3 = packetBytes
         self.transport.write(packetBytes)
 
-    def decrypt_RSA(self,Perkey):
+    def decrypt_RSA(self, Perkey):
         privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr())
         privobj = PKCS1_OAEP.new(privobj)
         self.pkS = privobj.decrypt(Perkey)
+        # print(self.pkS)
 
 
     def data_received(self, data):
@@ -131,10 +130,11 @@ class PLSClientProtocol(PLSProtocol):
                             self.state = "error_state"
                             if self.logging:
                                 print("PLS %s Protocol: Error: Nounce error!" % self.Side_Indicator)
-                        self.decrypt_RSA(packet.PreKey)
-                        self.M4 = packet.__serialize__()
-                        self.state = "M5"
-                        self.send_handshake_done()
+                        else:
+                            self.decrypt_RSA(packet.Pre_Key)
+                            self.M4 = packet.__serialize__()
+                            self.state = "M5"
+                            self.send_handshake_done()
 
                 ################ got handshakedone Packet #####################
                 elif isinstance(packet, PlsHandshakeDone):

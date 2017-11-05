@@ -13,16 +13,10 @@ import playground
 # you can turn off the logging of PEEP layer here for a clean logging
 # cf = StackingProtocolFactory(lambda: PLSClientProtocol(), lambda: PEEPClientProtocol(logging = False))
 # sf = StackingProtocolFactory(lambda: PLSServerProtocol(), lambda: PEEPServerProtocol(logging = False))
-
+'''
 cf = StackingProtocolFactory(lambda: PLSClientProtocol(), lambda: PEEPClientProtocol())
 sf = StackingProtocolFactory(lambda: PLSServerProtocol(), lambda: PEEPServerProtocol())
 
-
-
-
-### Not using passthrough in lab2
-# cf = StackingProtocolFactory(lambda: PEEPClientProtocol())
-# sf = StackingProtocolFactory(lambda: PEEPServerProtocol())
-
 lab3_connector = playground.Connector(protocolStack=(cf, sf))
 playground.setConnector('lab3_protocol', lab3_connector)
+'''
