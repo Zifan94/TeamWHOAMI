@@ -1,4 +1,5 @@
 from ..lab3_packets import *
+from .CertFactory import *
 from playground.network.common import StackingProtocol, StackingTransport, StackingProtocolFactory
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
@@ -16,6 +17,12 @@ class PLSProtocol(StackingProtocol):
     nonceS = 0
     pkC = b""
     pkS = b""
+    publickey = 0
+
+    # TODO with professor's guide
+    def extract_pulickey(self,certs):
+        self.publickey = CertFactory.getPublicKeyForAddr()
+
 
     def send_handshake_done(self):
         self.SHA1value = hashlib.sha1(self.M1 + self.M2 + self.M3 + self.M4)

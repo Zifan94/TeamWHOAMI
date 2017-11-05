@@ -1,9 +1,11 @@
-from . import PLSProtocol
+from .PLSProtocol import *
 from ..lab3_packets import *
+from .CertFactory import *
+from Crypto.Cipher import PKCS1_OAEP
 from playground.network.common import StackingProtocol, StackingTransport, StackingProtocolFactory
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
-
+import base64
 import playground
 import random
 import asyncio
@@ -41,7 +43,8 @@ class PLSClientProtocol(PLSProtocol):
         else:
             self._callback = callback
             self.nonceC = random.randint(1, 2 ^ 64)
-            certs=[] #TODO
+            certs=[]
+            certs.append(CertFactory.getCertsForAddr()) # TODO
             outBoundPacket = PlsHello.create(self.nonceC, certs)
             if self.logging:
                 print("PLS Protocol: Client_Hello sent")
@@ -60,10 +63,21 @@ class PLSClientProtocol(PLSProtocol):
         return True;
 
     def send_key_exchange(self):
-        self.transport.write()
+        self.pkC = b"This is key??!"
+        rsakey = RSA.importKey(self.publickey)
+        cipher = PKCS1_OAEP.new(rsakey)
+        cipher_text = cipher.encrypt(self.pkC)
+        outBoundPacket = PlsKeyExchange.create(cipher_text,self.nonceS+1)
+        packetBytes = outBoundPacket.__serialize__()
+        self.state = "M3"
+        self.M3 = packetBytes
+        self.transport.write(packetBytes)
 
     def decrypt_RSA(self,Perkey):
-        return 0;
+        privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr())
+        privobj = PKCS1_OAEP.new(privobj)
+        self.pkS = privobj.decrypt(Perkey)
+
 
     def data_received(self, data):
         self._deserializer.update(data)
@@ -89,6 +103,8 @@ class PLSClientProtocol(PLSProtocol):
                             print(
                                 "PLS %s Protocol: Pls Hello Received: Nonce = %d" % (self.Side_Indicator, packet.Nonce))
                         self.authentication(packet.Certs)
+                        self.extract_pulickey(packet.Certs)
+                        self.nonceS = packet.Nonce
                         self.M2 = packet.__serialize__()
                         self.send_key_exchange()
                         self.state = "M3"
@@ -101,11 +117,12 @@ class PLSClientProtocol(PLSProtocol):
                             self.Side_Indicator, self.state))
                         self.state = "error_state"
                     else:
-                        if self.nouce + 1 != packet.NoncePlusOne:
+                        if self.nonceS + 1 != packet.NoncePlusOne:
                             self.state = "error_state"
                             if self.logging:
                                 print("PLS %s Protocol: Error: Nounce error!" % self.Side_Indicator)
                         self.decrypt_RSA(packet.PreKey)
+                        self.M4 = packet.__serialize__()
                         self.state = "M5"
                         self.send_handshake_done()
 
