@@ -26,15 +26,25 @@ class PLSProtocol(StackingProtocol):
         self.publickey = CertFactory.getPublicKeyForAddr()
         # self.publickey = b"999" # use mock key for now
 
-
-    def send_handshake_done(self):
+    def calc_sha1(self):
         sha1 = hashlib.sha1()
         sha1.update(self.M1 + self.M2 + self.M3 + self.M4)
         self.SHA1value = sha1.digest()
+
+    def send_handshake_done(self):
         outBoundPacket = PlsHandshakeDone.create(self.SHA1value)
         self.transport.write(outBoundPacket.__serialize__())
+        # if self.logging:
+        #     print("PLS %s Protocol: handshake Done send!" % self.Side_Indicator)
+
+    def send_PlsClose(self, error=None):
+        outBoundPacket = PlsClose.create(error)
+        self.transport.write(outBoundPacket.__serialize__())
         if self.logging:
-            print("PLS %s Protocol: handshake Done send!" % self.Side_Indicator)
+            print("\n\n###################################################")
+            print("# PLS %s Protocol: !!!!! PlsClose send !!!!" % self.Side_Indicator)
+            print("# PLS %s Protocol: error is: %s" % (self.Side_Indicator, error))
+            print("###################################################\n\n")
 
     # handshake done, begin create keys
     def creat_keys(self):

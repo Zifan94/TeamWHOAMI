@@ -95,6 +95,7 @@ class PLSServerProtocol(PLSProtocol):
                                 "PLS %s Protocol: Error: State Error! Expecting Initial_State_0 but getting %s" %
                                 (self.Side_Indicator, self.state))
                         self.state = "error_state"
+                        self.send_PlsClose("state not match")
                     else:
                         if self.logging:
                             print("PLS %s Protocol: Pls Hello Received: Nonce = %d" % (self.Side_Indicator, packet.Nonce))
@@ -106,21 +107,25 @@ class PLSServerProtocol(PLSProtocol):
 
                 ################# got a KeyExchange Packet ######################
                 elif isinstance(packet,PlsKeyExchange):
-                    if self.state != "M2":
+                    # if self.state != "M2":
+                    if True:
                         if self.logging:
                             print("PLS %s Protocol: Error: State Error! Should be M2 but %s" %(self.Side_Indicator, self.state))
                         self.state = "error_state"
+                        self.send_PlsClose("state not match")
                     else:
                         if self.nonceC +1 != packet.NoncePlusOne:
-                            self.state = "error_state"
                             if self.logging:
                                 print("PLS %s Protocol: Error: Nounce error! Should be %d but %d" % self.Side_Indicator,self.nonceC +1,packet.NoncePlusOne)
+                            self.state = "error_state"
+                            self.send_PlsClose("Nonce not plus 1")
                         else:
                             self.decrypt_RSA(packet.Pre_Key)
                             self.M3 = packet.__serialize__()
                             self.state = "M4"
                             self.send_key_exchange()
-                            self.send_handshake_done()
+                            self.calc_sha1()
+                            # self.send_handshake_done()
                             self.state = "M6"
 
                 ################ got handshakedone Packet #####################
@@ -130,15 +135,27 @@ class PLSServerProtocol(PLSProtocol):
                             print("PLS %s Protocol: Error: State Error! Should be M6 but %s" % (
                             self.Side_Indicator, self.state))
                         self.state = "error_state"
+                        self.send_PlsClose("state not match")
                     else:
                         if self.SHA1value != packet.ValidationHash:
                             if self.logging:
                                 print("PLS %s Protocol: Error: SHA Error! Except SHA %s, but %s" % (
                                     self.Side_Indicator, self.SHA1value, packet.ValidationHash))
                             self.state = "error_state"
+                            self.send_PlsClose("SHA not match")
                         else:
+                            if self.logging:
+                                print("PLS %s Protocol: 6. Pls HandshakeDone sent\n"%(self.Side_Indicator))
+                            self.send_handshake_done()
                             self.state = "Data_transport"
                             self.creat_keys()
                             if self.logging:
-                                print("PLS %s Protocol: HandShake Done!\n" % self.Side_Indicator)
+                                print("\nPLS %s Protocol: ###### HandShake Done! ######\n" % self.Side_Indicator)
                             self.higherProtocol().connection_made(self.higherTransport)
+
+                ################# got a PlsClose Packet ######################
+                elif isinstance(packet,PlsClose):
+                    if self.logging:
+                        print("PLS %s Protocol: Got a PLS Close from other side"% self.Side_Indicator)
+                    # self.connection_lost()
+
