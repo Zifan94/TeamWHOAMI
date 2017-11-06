@@ -4,7 +4,9 @@ from playground.network.common import StackingProtocol, StackingTransport, Stack
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
 import hashlib
-
+from cryptography.x509 import load_pem_x509_certificate
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 class PLSProtocol(StackingProtocol):
     ###### init ######
@@ -23,8 +25,10 @@ class PLSProtocol(StackingProtocol):
 
     # TODO with professor's guide
     def extract_pulickey(self,certs):
-        self.publickey = CertFactory.getPublicKeyForAddr()
-        # self.publickey = b"999" # use mock key for now
+        # self.publickey = CertFactory.getPublicKeyForAddr()
+        cert_obj = load_pem_x509_certificate(certs[0], default_backend())
+        self.publickey = cert_obj.public_key().public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
+
 
     def calc_sha1(self):
         sha1 = hashlib.sha1()

@@ -44,8 +44,8 @@ class PLSServerProtocol(PLSProtocol):
     def send_Server_Hello_Packet(self):
         self.nonceS = random.randint(1, 2 ** 64)
         certs=[] #TODO
-        #certs.append(CertFactory.getCertsForAddr())
-        certs.append(b"cert server") # use fake cert for now
+        certs.append(CertFactory.getCertsForAddr())
+        # certs.append(b"cert server") # use fake cert for now
         outBoundPacket = PlsHello.create(self.nonceS, certs)
         if self.logging:
             print("PLS %s Protocol: 2. Server_Hello sent\n"% (self.Side_Indicator))
