@@ -107,7 +107,7 @@ class PLSServerProtocol(PLSProtocol):
 
                 ################# got a KeyExchange Packet ######################
                 elif isinstance(packet,PlsKeyExchange):
-                     if self.state != "M2":
+                    if self.state != "M2":
                         if self.logging:
                             print("PLS %s Protocol: Error: State Error! Should be M2 but %s" %(self.Side_Indicator, self.state))
                         self.state = "error_state"
@@ -157,4 +157,3 @@ class PLSServerProtocol(PLSProtocol):
                     if self.logging:
                         print("PLS %s Protocol: Got a PLS Close from other side"% self.Side_Indicator)
                     # self.connection_lost()
-
