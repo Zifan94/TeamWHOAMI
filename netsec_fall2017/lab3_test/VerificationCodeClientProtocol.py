@@ -144,7 +144,7 @@ class VerificationCodeClientProtocol(asyncio.Protocol):
 		return answer
 
 if __name__ =="__main__":
-	p_logging.EnablePresetLogging(p_logging.PRESET_TEST)
+	# p_logging.EnablePresetLogging(p_logging.PRESET_TEST)
 	loop = asyncio.get_event_loop()
 	loop.set_debug(enabled = True)
 
