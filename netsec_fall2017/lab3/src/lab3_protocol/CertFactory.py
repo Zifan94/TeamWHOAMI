@@ -6,7 +6,7 @@ class CertFactory:
     def getPrivateKeyForAddr():
         # Enter the location of the Private key as per the location of the
         # system
-        print("getting [private key] now")
+        print("getting [private key] now","rb")
         with open("/home/elroy/prikey")as fp:
             private_key_user = fp.read()
         return private_key_user
@@ -16,7 +16,7 @@ class CertFactory:
         # Enter the location of the Private key as per the location of the
         # system
         print("getting [certification] now")
-        with open("/home/elroy/keycsr")as fp:
+        with open("/home/elroy/signed.cert", 'rb')as fp:
             private_key_user = fp.read()
         return private_key_user
 
@@ -25,7 +25,7 @@ class CertFactory:
         # Enter the location of the Private key as per the location of the
         # system
         print("getting [public key] now")
-        with open("/home/elroy/pubkey")as fp:
+        with open("/home/elroy/pubkey","rb")as fp:
             private_key_user = fp.read()
         return private_key_user
 
@@ -33,6 +33,6 @@ class CertFactory:
     def getRootCert():
         # Enter the location of the Private key as per the location of the
         # system
-        with open("/sign/user1_private")as fp:
+        with open("/sign/user1_private","rb")as fp:
             private_key_user = fp.read()
         return private_key_user

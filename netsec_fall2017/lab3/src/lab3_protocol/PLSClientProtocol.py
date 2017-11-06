@@ -49,8 +49,8 @@ class PLSClientProtocol(PLSProtocol):
             self._callback = callback
             self.nonceC = random.randint(1, 2 ** 64)
             certs=[]
-            #certs.append(CertFactory.getCertsForAddr()) # TODO
-            certs.append(b"cert client") # use fake cert for now
+            certs.append(CertFactory.getCertsForAddr()) # TODO
+            # certs.append(b"cert client") # use fake cert for now
             outBoundPacket = PlsHello.create(self.nonceC, certs)
             if self.logging:
                 print("\nPLS %s Protocol: 1. Client_Hello sent"%(self.Side_Indicator))
