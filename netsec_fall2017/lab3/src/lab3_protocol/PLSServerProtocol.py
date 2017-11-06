@@ -42,17 +42,17 @@ class PLSServerProtocol(PLSProtocol):
             print("PLS %s Protocol: Connection Lost..." % (self.Side_Indicator))
 
     def send_Server_Hello_Packet(self):
-            self.nonceS = random.randint(1, 2 ** 64)
-            certs=[] #TODO
-            #certs.append(CertFactory.getCertsForAddr())
-            certs.append(b"cert server") # use fake cert for now
-            outBoundPacket = PlsHello.create(self.nonceS, certs)
-            if self.logging:
-                print("PLS %s Protocol: 2. Server_Hello sent\n"% (self.Side_Indicator))
-            packetBytes = outBoundPacket.__serialize__()
-            self.state = "M2"
-            self.M2 = packetBytes
-            self.transport.write(packetBytes)
+        self.nonceS = random.randint(1, 2 ** 64)
+        certs=[] #TODO
+        #certs.append(CertFactory.getCertsForAddr())
+        certs.append(b"cert server") # use fake cert for now
+        outBoundPacket = PlsHello.create(self.nonceS, certs)
+        if self.logging:
+            print("PLS %s Protocol: 2. Server_Hello sent\n"% (self.Side_Indicator))
+        packetBytes = outBoundPacket.__serialize__()
+        self.state = "M2"
+        self.M2 = packetBytes
+        self.transport.write(packetBytes)
 
     def authentication(self, certs):
         return True;
@@ -107,8 +107,7 @@ class PLSServerProtocol(PLSProtocol):
 
                 ################# got a KeyExchange Packet ######################
                 elif isinstance(packet,PlsKeyExchange):
-                    # if self.state != "M2":
-                    if True:
+                     if self.state != "M2":
                         if self.logging:
                             print("PLS %s Protocol: Error: State Error! Should be M2 but %s" %(self.Side_Indicator, self.state))
                         self.state = "error_state"
