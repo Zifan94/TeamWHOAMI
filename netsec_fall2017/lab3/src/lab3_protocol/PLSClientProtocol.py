@@ -170,4 +170,4 @@ class PLSClientProtocol(PLSProtocol):
                 elif isinstance(packet,PlsClose):
                     if self.logging:
                         print("PLS %s Protocol: Got a PLS Close from other side"% self.Side_Indicator)
-                    # self.connection_lost()
+                    self.connection_lost()
