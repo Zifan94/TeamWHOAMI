@@ -3,6 +3,7 @@ from playground.network.packet.fieldtypes import UINT64, UINT32, UINT16, UINT8, 
 from playground.network.packet.fieldtypes.attributes import *
 # from ..src.lab3_protocol import *
 from ..src.lab3_packets import *
+from ..src.lab3_protocol import *
 from playground.asyncio_lib.testing import TestLoopEx
 from playground.network.testing import MockTransportToStorageStream as MockTransport
 from playground.network.testing import MockTransportToProtocol
@@ -11,9 +12,10 @@ import asyncio
 import random
 import base64
 import playground
+import os
 
 
-def basicUnitTestForUtil(loggingFlag):
+def PacketUnitTest(loggingFlag):
 
 	# test for create_PlsHello
 	nonceC = random.randint(1, 2 ^ 64)
@@ -46,8 +48,35 @@ def basicUnitTestForUtil(loggingFlag):
 	assert packet1.Error == "error reason is ..."
 	if loggingFlag == True: print ("- test for PlsClose.create SUCCESS")
 
+def EngineUnitTest(loggingFlag):
 
+	EKc = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	EKs = b"\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
+	IVc = b"\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
+	IVs = b"\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04"
+	MKc = b"\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04\x04"
+	MKs = b"\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05"
 
+	c_Encryp_Engine = EncryptionEngine(EKc, IVc)
+	c_Decryp_Engine = DecryptionEngine(EKs, IVs)
+	c_MACEngine = MACEngine(MKc)
+	c_VerificationEngine = VerificationEngine(MKs)
+
+	s_Encryp_Engine = EncryptionEngine(EKs, IVs)
+	s_Decryp_Engine = DecryptionEngine(EKc, IVc)
+	s_MACEngine = MACEngine(MKs)
+	s_VerificationEngine = VerificationEngine(MKc)
+
+	msg = b"hahahahahahahahahahahah"
+	C = c_Encryp_Engine.encrypt(msg)
+	V = c_MACEngine.calc_MAC(C)
+
+	V_ = s_VerificationEngine.calc_MAC(C)
+	msg_ = s_Decryp_Engine.decrypt(C)
+
+	assert msg == msg_
+	assert V == V_
+	if loggingFlag == True: print ("- test for Encrytion/Decryption SUCCESS")
 
 if __name__ =="__main__":
 
@@ -58,9 +87,12 @@ if __name__ =="__main__":
 	# more efficiently instead of find in a bunch of logging sentences.
 	
 	print ("=======================================")
-	print ("### START BASIC UNIT TEST FOR Util###")
+	print ("### START PACKET UNIT TEST ###")
 	print ("")
-	basicUnitTestForUtil(False) #Set the parameter into True to print the detail result inside this UnitTest
+	PacketUnitTest(False) #Set the parameter into True to print the detail result inside this UnitTest
+	print("")
+	print("")
+	EngineUnitTest(False) #Set the parameter into True to print the detail result inside this UnitTest
 	print("")
 	print("")
 	print("### ALL UTIL UNIT TEST SUCCESS! ###")
