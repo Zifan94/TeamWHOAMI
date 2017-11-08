@@ -2,6 +2,7 @@ from playground.network.packet import PacketType
 from playground.network.packet.fieldtypes import UINT64, UINT32, UINT16, UINT8, STRING, BUFFER, BOOL, LIST
 from .PLSProtocol import *
 from ..lab3_packets import *
+from ..lab3_transport import *
 from .CertFactory import *
 from Crypto.Cipher import PKCS1_OAEP
 from playground.network.common import StackingProtocol, StackingTransport, StackingProtocolFactory
@@ -33,7 +34,7 @@ class PLSServerProtocol(PLSProtocol):
         if self.logging:
             print("PLS %s Protocol: Connection Made..." % (self.Side_Indicator))
         self.transport = transport
-        self.higherTransport = StackingTransport(self.transport)
+
 
     def connection_lost(self, exc=None):
         self.higherProtocol().connection_lost(None)
@@ -150,7 +151,40 @@ class PLSServerProtocol(PLSProtocol):
                             self.creat_keys()
                             if self.logging:
                                 print("\nPLS %s Protocol: ###### HandShake Done! ######\n" % self.Side_Indicator)
-                            self.higherProtocol().connection_made(self.higherTransport)
+
+                            self.PLSTransport = PLSTransport(self.transport)
+                            self.PLSTransport.logging = self.logging
+                            self.PLSTransport.Side_Indicator = self.Side_Indicator
+                            self.PLSTransport.set_Engine(self.Encryption_Engine, self.MAC_Engine)
+
+                            self.higherProtocol().connection_made(self.PLSTransport)
+
+                ################# got a PlsClose Packet ######################
+                elif isinstance(packet,PlsData):
+                    if self.state != "Data_transport":
+                        if self.logging:
+                            print("PLS %s Protocol: Error: State Error! Should be Data_transport but %s" % (
+                            self.Side_Indicator, self.state))
+                        self.state = "error_state"
+                        self.send_PlsClose("state not match")
+                    else:
+                        self.count += 1
+                        if self.logging:
+                            print("PLS %s Protocol: Got %d PLS Data from other side"% (self.Side_Indicator, self.count))
+                        C = packet.Ciphertext
+                        V = packet.Mac
+                        V_ = self.Verification_Engine.calc_MAC(C)
+                        if V == V_: # Verification Success
+                            Current_PlainText = self.Decryption_Engine.decrypt(C)
+                            self.higherProtocol().data_received(Current_PlainText)
+                            if self.logging:
+                                print("PLS %s Protocol: Verification Success, passing data up!"% (self.Side_Indicator))
+
+                        else: # V != V_  Verification Fail 
+                            if self.logging:
+                                print("PLS %s Protocol: Verification Fail !!!!!!!!!!!!!!!!!!!!"% (self.Side_Indicator))
+                            self.state = "error_state"
+                            self.send_PlsClose("MAC verifiation failed!")
 
                 ################# got a PlsClose Packet ######################
                 elif isinstance(packet,PlsClose):

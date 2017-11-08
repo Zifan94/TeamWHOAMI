@@ -7,6 +7,8 @@ import hashlib
 from cryptography.x509 import load_pem_x509_certificate
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+from .PLSProtocol import *
+from .Engine import *
 
 class PLSProtocol(StackingProtocol):
     ###### init ######
@@ -22,6 +24,14 @@ class PLSProtocol(StackingProtocol):
     publickey = 0
     Side_Indicator = ""
     logging = False
+    count = 0 # record the total incoming Pls data pkt from other side
+
+    PLSTransport = None
+
+    Encryption_Engine = None
+    Decryption_Engine = None
+    MAC_Engine = None
+    Verification_Engine = None
 
     # TODO with professor's guide
     def extract_pulickey(self,certs):
@@ -62,16 +72,38 @@ class PLSProtocol(StackingProtocol):
         block_3 = hashlib.sha1(block_2).digest()
         block_4 = hashlib.sha1(block_3).digest()
         block = block_0 + block_1 + block_2 + block_3 + block_4
-        self.Ekc = block[0:15]
-        self.Eks = block[16:31]
-        self.IVc = block[32:47]
-        self.IVs = block[48:63]
-        self.MKc = block[64:78]
-        self.MKs = block[80:95]
+        self.Ekc = block[0:16]
+        self.Eks = block[16:32]
+        self.IVc = block[32:48]
+        self.IVs = block[48:64]
+        self.MKc = block[64:80]
+        self.MKs = block[80:96]
         if self.logging:
-            print("  * Ekc -- %s" % (self.Ekc))
-            print("  * Eks -- %s" % (self.Eks))
-            print("  * IVc -- %s" % (self.IVc))
-            print("  * IVs -- %s" % (self.IVs))
-            print("  * MKc -- %s" % (self.MKc))
-            print("  * MKs -- %s\n" % (self.MKs))
+            print("  * Ekc -- %s, len: %d" % (self.Ekc, len(self.Ekc)))
+            print("  * Eks -- %s, len: %d" % (self.Eks, len(self.Eks)))
+            print("  * IVc -- %s, len: %d" % (self.IVc, len(self.IVc)))
+            print("  * IVs -- %s, len: %d" % (self.IVs, len(self.IVs)))
+            print("  * MKc -- %s, len: %d" % (self.MKc, len(self.MKc)))
+            print("  * MKs -- %s, len: %d\n" % (self.MKs, len(self.MKs)))
+
+        if self.Side_Indicator == "Server":
+            self.Encryption_Engine = EncryptionEngine(self.Eks, self.IVs)
+            self.Decryption_Engine = DecryptionEngine(self.Ekc, self.IVc)
+            self.MAC_Engine = MACEngine(self.MKs)
+            self.Verification_Engine = VerificationEngine(self.MKc)
+            if self.logging:
+                print("PLS %s Protocol: All 4 Engine set up!" % self.Side_Indicator)
+
+        elif self.Side_Indicator == "Client":
+            self.Encryption_Engine = EncryptionEngine(self.Ekc, self.IVc)
+            self.Decryption_Engine = DecryptionEngine(self.Eks, self.IVs)
+            self.MAC_Engine = MACEngine(self.MKc)
+            self.Verification_Engine = VerificationEngine(self.MKs)
+            if self.logging:
+                print("PLS %s Protocol: All 4 Engine set up!" % self.Side_Indicator)
+
+        else:
+            # this must be logged even if self.logging == False
+            print("\n###########################################################")
+            print("########## ERROR: Side Indicator not defined! #############")
+            print("###########################################################\n")
