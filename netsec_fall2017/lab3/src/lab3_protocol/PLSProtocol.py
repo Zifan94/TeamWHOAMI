@@ -68,4 +68,10 @@ class PLSProtocol(StackingProtocol):
         self.IVs = block[48:63]
         self.MKc = block[64:78]
         self.MKs = block[80:95]
-        print(self.Ekc,' ',self.Eks,' ',self.IVc,' ',self.IVs,' ',self.MKc,' ',self.MKs)
+        if self.logging:
+            print("  * Ekc -- %s" % (self.Ekc))
+            print("  * Eks -- %s" % (self.Eks))
+            print("  * IVc -- %s" % (self.IVc))
+            print("  * IVs -- %s" % (self.IVs))
+            print("  * MKc -- %s" % (self.MKc))
+            print("  * MKs -- %s\n" % (self.MKs))
