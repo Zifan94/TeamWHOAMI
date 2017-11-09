@@ -17,12 +17,11 @@ import asyncio
 
 class PLSClientProtocol(PLSProtocol):
 
-    state = "Not_Init_State"
-
     def __init__(self, Side_Indicator="Client", logging=True):
         if Side_Indicator is not None:  # here we use Side_Indicator to help logging
             self.Side_Indicator = Side_Indicator
         self.logging = logging
+        self.state = "Not_Init_State"
 
         if self.logging:
             print("PLS %s Protocol: Init Compelete..." % (self.Side_Indicator))
@@ -172,7 +171,7 @@ class PLSClientProtocol(PLSProtocol):
 
                             self.higherProtocol().connection_made(self.PLSTransport)
 
-                ################# got a PlsClose Packet ######################
+                ################# got a PlsData Packet ######################
                 elif isinstance(packet,PlsData):
                     if self.state != "Data_transport":
                         if self.logging:
