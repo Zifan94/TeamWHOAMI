@@ -175,9 +175,9 @@ class PLSServerProtocol(PLSProtocol):
                         V_ = self.Verification_Engine.calc_MAC(C)
                         if V == V_: # Verification Success
                             Current_PlainText = self.Decryption_Engine.decrypt(C)
-                            self.higherProtocol().data_received(Current_PlainText)
                             if self.logging:
                                 print("PLS %s Protocol: Verification Success, passing data up!"% (self.Side_Indicator))
+                            self.higherProtocol().data_received(Current_PlainText)
 
                         else: # V != V_  Verification Fail 
                             if self.logging:
@@ -188,5 +188,12 @@ class PLSServerProtocol(PLSProtocol):
                 ################# got a PlsClose Packet ######################
                 elif isinstance(packet,PlsClose):
                     if self.logging:
-                        print("PLS %s Protocol: Got a PLS Close from other side"% self.Side_Indicator)
-                    self.connection_lost()
+                        print("\n########################################################")
+                        print("# PLS %s Protocol: Got a PLS Close from other side #"% self.Side_Indicator)
+                        print("########################################################")
+                        Normal_PLSClose = PlsClose.create()
+                        if packet != Normal_PLSClose:
+                            print("\n     ----- CLOSE REASON: %s -----"%packet.Error)
+                        else:
+                            print("\n     ----- CLOSE REASON: NORMAL SHUT DOWN -----\n")
+                    self.transport.close() # call PEEPTransport.close()
