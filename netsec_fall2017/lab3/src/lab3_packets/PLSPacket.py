@@ -78,9 +78,9 @@ class PlsClose(PacketType):
     ]
 
     @staticmethod
-    def create(Error):
+    def create(Error = None):
         newPacket = PlsClose()
 
-        newPacket.Error = Error
+        if Error != None:   newPacket.Error = Error
 
         return newPacket
