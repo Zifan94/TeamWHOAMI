@@ -78,6 +78,32 @@
         target="RFC2119">RFC 2119</xref>.</t>
       </section>
     </section>
+    <section title="Packet Description">
+      <section title="PlsHello Packet">
+      </section>
+      <section title="PlsKeyExchange Packet">
+      </section>
+      <section title="PlsHandshakeDone Packet">
+      </section>
+      <section title="PlsData Packet">
+      </section>
+      <section title="PlsClose Packet">
+      </section>
+    </section>
+    <section title="Session Life">
+      <section title="Session Establishment">
+        <section title="Key Derivation">
+        </section>
+        <section title="Error Handling">
+        </section>
+      </section>
+      <section title="Data Transmission">
+        <section title="Error Handling">
+        </section>
+      </section>
+      <section title="Session Termination">
+      </section>
+    </section>
   </middle>
 
   <back>
