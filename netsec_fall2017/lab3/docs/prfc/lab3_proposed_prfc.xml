@@ -202,10 +202,23 @@
       </section>
       <section title="Data Transmission">
         <section title="Error Handling">
-          
+
         </section>
       </section>
       <section title="Session Termination">
+        <t>Either the client or the server can initiate the closing of the session
+        by sending a PlsClose packet. This will happen in two cases.</t>
+
+        <t>The first case is a normal shutdown. All the data has finished being
+        transmitted, and the client or the server wishes to close the session. To
+        do so, a PlsClose packet is sent, but the error message is omitted. The
+        connection is then closed.</t>
+
+        <t>The second case is an error case. If at any point either the client or
+        the server receives an error from the other side, during the handshake or
+        during data transmission, the protocol MUST send a PlsClose packet with
+        an implementation specific error message. This terminates the session and
+        lets the other side know why the session was closed.</t>
       </section>
     </section>
   </middle>
