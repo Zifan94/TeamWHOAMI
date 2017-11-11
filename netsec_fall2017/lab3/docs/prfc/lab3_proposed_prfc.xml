@@ -170,13 +170,39 @@
         this time. These packets can be sent simultaneously since they both contain hashes of
         the packets before this step, so they are not contingent on each other.</t>
         <section title="Key Derivation">
-          <t></t>
+          <t>The client needs to generate a client encryption key, a server encryption
+          key which serves as the client's decryption key, a client MAC key and a server
+          MAC key which serves as the client's verification key. The server needs to
+          generate the same 4 keys, with the roles being flipped (so the client MAC key
+          serves as the server's verification key and the client's encryption key serves
+          as the server's decryption key). Each key is 128 bits. Each side also generates
+          an encryption IV of size 128 bits.</t>
+
+          <t>To generate each key, we go through a hashing process. We generate
+          a stream using repeated SHA1 hashing of the seed "PLS1.0" + Nc + Ns +
+          PKc + PKs. Each hash generates 160 bits. The first hash is the hashing
+          of "PLS1.0 + Nc + Ns + PKc + PKs" with Nc and Ns being the Nonce of the client
+          and of the server, respectively, and PKc and PKs being the PreKeys of the
+          client and server, respectively. Each of the next four hashes is the result
+          of hashing the previous hash (for example, the second hash is the hash of
+          the first hash and so on). This stream is now 800 bits.</t>
+
+          <t>The keys then get created as follows: the encryption key of the client
+          is the first 128 bits, the encryption key of the server is the next 128 bits,
+          the IV of the client is the next 128 bits, the IV of the server is the 128 bits
+          after, the MAC key of the client is the next 128 bits, and the MAC key of
+          the server is the next 128 bits. The final 32 bits is discarded.</t>
         </section>
         <section title="Error Handling">
+          <t>If either client or server detects an error, it should send a PlsClose
+          packet with an error message. The text of the error message is implementation
+          specific, but the presence of an error message indicates that it was not
+          a normal termination.</t>
         </section>
       </section>
       <section title="Data Transmission">
         <section title="Error Handling">
+          
         </section>
       </section>
       <section title="Session Termination">
