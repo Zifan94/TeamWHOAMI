@@ -48,13 +48,29 @@
     <workgroup>WHOAMI</workgroup>
     <keyword>PRFC</keyword>
     <abstract>
-
+      <t>PLS (Playground Layer Security Protocol) is a "middleware" protocol intended
+      to provide secure transmission between two communicating applications. The
+      protocol is composed a six-way handshake, data transmission, and termination.
+      This document describes the functions to be performed by the PLS layer and the
+      program that implements it.</t>
     </abstract>
   </front>
 
   <middle>
     <section title="Introduction">
-      <t></t>
+      <t>The purpose of lab 3 is to design and implement a security layer to be
+      used in the PLAYGROUND framework, designed by Dr. Seth James Nielson to give
+      students an environment to lear about internet security attacks and defenses
+      on a much smaller scale.</t>
+
+      <t>In particular, the security layer in lab 3, dubbed PLS (Playground Layer
+      Security Protocol) consists of the following parts: a six-way handshake to
+      establish connection betweeen a server side application and a client side
+      application, data transmission between the two protocols, and a termination
+      that either protocol can initiate to close the session, either when the
+      data is collected or in response to an error. This PRFC will go into more
+      detail about each process and descriptions of the PLS packets and error handling.</t>
+
       <section title="Requirements Language">
         <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
         "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
