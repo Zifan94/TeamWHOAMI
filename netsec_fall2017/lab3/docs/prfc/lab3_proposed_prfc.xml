@@ -144,7 +144,12 @@
       </section>
     </section>
     <section title="Session Life">
-      <t></t>
+      <t>Just like in other layers, there MUST be sessions to handle the case where
+      multiple client protocols try connecting to the same server, and to handle
+      the case where the server does not terminate properly when a client finishes
+      sending information. Even if different ports are used, the old protocol will
+      still exist in memory. Each session MUST include session establishment,
+      data transmission, and session termination.</t>
       <section title="Session Establishment">
         <section title="Key Derivation">
         </section>
