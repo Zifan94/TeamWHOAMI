@@ -201,8 +201,47 @@
         </section>
       </section>
       <section title="Data Transmission">
-        <section title="Error Handling">
+        <t>After the handshake is completed and the session is created, data transmission
+        can begin. Each side creates an encryption and a decryption engine that differs
+        for each side.</t>
 
+        <t>For the client, the encryption engine is configured with the client encryption
+        key and the client IV as the initial counter value. The decryption engine is
+        configured with the server encryption key as the key and server IV as the
+        initial counter value.</t>
+
+        <t>The server follows the same process with the client and server keys reversed.
+        So the encryption engine uses the server encryption key and server IV, and the
+        decryption engine uses the client encryption key and IV.</t>
+
+        <t>Each side also creates an HMAC-SHA1 MAC engine and a Verification engine.
+        The MAC engine is generated using the protocol's own MAC key and the Verification
+        engine is created based on the other protocol's MAC key.</t>
+
+        <t>To actually send data, plain text is encrypted through the encryption engine
+        to create the Ciphertext of the data packet, and then the Ciphertext is passed
+        through the MAC engine to produce the Verification of the data packet. Then
+        the packet is sent.</t>
+
+        <t>When data is received, the protocol extracts the Ciphertext from the packet
+        and passes it to the verification engine to see if it matches the Verification
+        of the packet. If it does not, the packet is discarded, but the connection
+        is not necessarily closed. Closing here depends on the implementation. If
+        the implementation chooses to close the session, it MUST send a PlsClose packet
+        with an error message.</t>
+
+        <t>If the Ciphertext is verified, then it is passed to the decryption engine to
+        produce the plaintext. Then the data is passed to the higher layer.</t>
+
+        <t>All data is encrypted using AES-128 during this time. The encryption engine
+        should be configured with the IV of the protocol as the initial counter.</t>
+
+        <t>Data sent MUST be encrypted with the encryption key of the protocol. The
+        Ciphertext is sent through the appropriate MAC engine.</t>
+        <section title="Error Handling">
+          <t>At any point, if either the client or the server receives an error,
+          the protocol MUST send a PlsClose packet with an implementation specific
+          error message to terminate the session.</t>
         </section>
       </section>
       <section title="Session Termination">
