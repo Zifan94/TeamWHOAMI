@@ -151,7 +151,26 @@
       still exist in memory. Each session MUST include session establishment,
       data transmission, and session termination.</t>
       <section title="Session Establishment">
+        <t>Session establishment MUST use a six-way handshake. The process starts
+        with the client sendind a PlsHello packet to the server. The "Nonce" is a
+        64-bit random number and the "Certs" is a list of certificates required for
+        authorization, with the first one being the certificate of the client.</t>
+
+        <t>The server then replies with a PlsHello packet of its own. The "Nonce"
+        is another 64-bit random number and the "Certs" field is another list of
+        certificates required for authorization, with the first one being the
+        certificate of the server.</t>
+
+        <t>The client then responds with a PlsKeyExchange packet. The server then
+        responds with a PlsKeyExchange packet of its own. The actual "PreKey" generation
+        will be discussed later.</t>
+
+        <t>The client proceeds to send a PlsHandshakeDone packet after the PlsKeyExchange
+        packets are sent and received. The server also sends a PlsHandshakeDone packet at
+        this time. These packets can be sent simultaneously since they both contain hashes of
+        the packets before this step, so they are not contingent on each other.</t>
         <section title="Key Derivation">
+          <t></t>
         </section>
         <section title="Error Handling">
         </section>
