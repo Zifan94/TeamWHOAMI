@@ -3,29 +3,18 @@
 class CertFactory:
 
     @staticmethod
-    def getPrivateKeyForAddr():
-        # Enter the location of the Private key as per the location of the
-        # system
+    def getPrivateKeyForAddr(file):
+        root = "/home/elroy/Cert/"
         print("getting [private key] now","rb")
-        with open("/home/elroy/prikey")as fp:
+        with open(root+file)as fp:
             private_key_user = fp.read()
         return private_key_user
 
     @staticmethod
-    def getCertsForAddr():
-        # Enter the location of the Private key as per the location of the
-        # system
+    def getCertsForAddr(file):
+        root = "/home/elroy/Cert/"
         print("getting [certification] now")
-        with open("/home/elroy/signed.cert", 'rb')as fp:
-            private_key_user = fp.read()
-        return private_key_user
-
-    @staticmethod
-    def getPublicKeyForAddr():
-        # Enter the location of the Private key as per the location of the
-        # system
-        print("getting [public key] now")
-        with open("/home/elroy/pubkey","rb")as fp:
+        with open(root+file, 'rb')as fp:
             private_key_user = fp.read()
         return private_key_user
 
@@ -33,6 +22,6 @@ class CertFactory:
     def getRootCert():
         # Enter the location of the Private key as per the location of the
         # system
-        with open("/sign/user1_private","rb")as fp:
+        with open("/home/elroy/Cert/root.crt","rb")as fp:
             private_key_user = fp.read()
         return private_key_user

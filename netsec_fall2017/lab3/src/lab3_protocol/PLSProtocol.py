@@ -7,11 +7,12 @@ import hashlib
 from cryptography.x509 import load_pem_x509_certificate
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-from .PLSProtocol import *
 from .Engine import *
+from playground.common.CipherUtil import *
 
 class PLSProtocol(StackingProtocol):
     ###### init ######
+    state = ""
     M1 = b""
     M2 = b""
     M3 = b""
@@ -25,17 +26,22 @@ class PLSProtocol(StackingProtocol):
     Side_Indicator = ""
     logging = False
     count = 0 # record the total incoming Pls data pkt from other side
-
     PLSTransport = None
-
     Encryption_Engine = None
     Decryption_Engine = None
     MAC_Engine = None
     Verification_Engine = None
 
-    # TODO with professor's guide
+    def authentication(self, certs):
+        listCertificates = [getCertFromBytes(certs[0]), getCertFromBytes(certs[1]), getCertFromBytes(CertFactory.getRootCert())]
+        verifier = ValidateCertChainSigs(listCertificates)
+        if self.logging:
+            print("Verification :", verifier)
+        if not verifier:
+            self.state = "error_state"
+            self.send_PlsClose("Certs Verification not pass!")
+
     def extract_pulickey(self,certs):
-        # self.publickey = CertFactory.getPublicKeyForAddr()
         cert_obj = load_pem_x509_certificate(certs[0], default_backend())
         self.publickey = cert_obj.public_key().public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
 

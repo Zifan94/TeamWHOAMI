@@ -48,7 +48,8 @@ class PLSClientProtocol(PLSProtocol):
             self._callback = callback
             self.nonceC = random.randint(1, 2 ** 64)
             certs=[]
-            certs.append(CertFactory.getCertsForAddr()) # TODO
+            certs.append(CertFactory.getCertsForAddr("signed-client.cert"))
+            certs.append(CertFactory.getCertsForAddr("signed.cert"))
             # certs.append(b"cert client") # use fake cert for now
             outBoundPacket = PlsHello.create(self.nonceC, certs)
             if self.logging:
@@ -64,9 +65,6 @@ class PLSClientProtocol(PLSProtocol):
         if self.logging:
             print("PLS %s Protocol: Connection Lost..." % (self.Side_Indicator))
 
-    def authentication(self, certs):
-        return True;
-
     def send_key_exchange(self):
         self.pkC = b"This is key??!"
         rsakey = RSA.importKey(self.publickey)
@@ -81,7 +79,7 @@ class PLSClientProtocol(PLSProtocol):
         self.transport.write(packetBytes)
 
     def decrypt_RSA(self, Perkey):
-        privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr())
+        privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr("client-prikey"))
         privobj = PKCS1_OAEP.new(privobj)
         self.pkS = privobj.decrypt(Perkey)
         # print(self.pkS)

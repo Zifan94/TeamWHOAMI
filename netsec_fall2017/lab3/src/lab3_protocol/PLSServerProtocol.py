@@ -43,8 +43,9 @@ class PLSServerProtocol(PLSProtocol):
 
     def send_Server_Hello_Packet(self):
         self.nonceS = random.randint(1, 2 ** 64)
-        certs=[] #TODO
-        certs.append(CertFactory.getCertsForAddr())
+        certs=[]
+        certs.append(CertFactory.getCertsForAddr("signed-server.cert"))
+        certs.append(CertFactory.getCertsForAddr("signed.cert"))
         # certs.append(b"cert server") # use fake cert for now
         outBoundPacket = PlsHello.create(self.nonceS, certs)
         if self.logging:
@@ -53,9 +54,6 @@ class PLSServerProtocol(PLSProtocol):
         self.state = "M2"
         self.M2 = packetBytes
         self.transport.write(packetBytes)
-
-    def authentication(self, certs):
-        return True;
 
     def send_key_exchange(self):
         self.pkS = b"hahahahahahaha 123123"
@@ -71,7 +69,7 @@ class PLSServerProtocol(PLSProtocol):
             print("\nPLS %s Protocol: 4. %s_PlsKeyExchange sent\n"%(self.Side_Indicator,self.Side_Indicator))
 
     def decrypt_RSA(self, Perkey):
-        privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr())
+        privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr("server-prikey"))
         privobj = PKCS1_OAEP.new(privobj)
         self.pkC = privobj.decrypt(Perkey)
         # print(self.pkC)
