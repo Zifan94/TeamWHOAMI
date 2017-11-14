@@ -34,7 +34,14 @@ class PLSProtocol(StackingProtocol):
 
     def authentication(self, certs):
         listCertificates = [getCertFromBytes(certs[0]), getCertFromBytes(certs[1]), getCertFromBytes(CertFactory.getRootCert())]
-        verifier = ValidateCertChainSigs(listCertificates)
+        verifier = True
+        for i in range(len(certs) - 1):
+            this = listCertificates[i]
+            issuer = RSA_SIGNATURE_MAC(listCertificates[i + 1].public_key())
+            if not issuer.verify(this.tbs_certificate_bytes, this.signature):
+                verifier = False
+                break
+
         if self.logging:
             print("Verification :", verifier)
         if not verifier:

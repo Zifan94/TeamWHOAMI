@@ -2,8 +2,11 @@ from playground.network.packet import PacketType
 from playground.network.packet.fieldtypes import UINT64, UINT32, UINT16, UINT8, STRING, BUFFER, BOOL, LIST
 from playground.network.packet.fieldtypes.attributes import *
 
+class PacketBaseType(PacketType):
+    DEFINITION_IDENTIFIER = "netsecfall2017.pls.basetype"
+    DEFINITION_VERSION = "1.0"
 
-class PlsHello(PacketType):
+class PlsHello(PacketBaseType):
     DEFINITION_IDENTIFIER = "netsecfall2017.pls.hello"
     DEFINITION_VERSION = "1.0"
     FIELDS = [
@@ -21,7 +24,7 @@ class PlsHello(PacketType):
         return newPacket
 
 
-class PlsKeyExchange(PacketType):
+class PlsKeyExchange(PacketBaseType):
     DEFINITION_IDENTIFIER = "netsecfall2017.pls.keyexchange"
     DEFINITION_VERSION = "1.0"
     FIELDS = [
@@ -38,7 +41,7 @@ class PlsKeyExchange(PacketType):
 
         return newPacket
 
-class PlsHandshakeDone(PacketType):
+class PlsHandshakeDone(PacketBaseType):
     DEFINITION_IDENTIFIER = "netsecfall2017.pls.handshakedone"
     DEFINITION_VERSION = "1.0"
     FIELDS = [
@@ -53,7 +56,7 @@ class PlsHandshakeDone(PacketType):
 
         return newPacket
 
-class PlsData(PacketType):
+class PlsData(PacketBaseType):
     DEFINITION_IDENTIFIER = "netsecfall2017.pls.data"
     DEFINITION_VERSION = "1.0"
     FIELDS = [
@@ -70,7 +73,7 @@ class PlsData(PacketType):
 
         return newPacket
 
-class PlsClose(PacketType):
+class PlsClose(PacketBaseType):
     DEFINITION_IDENTIFIER = "netsecfall2017.pls.close"
     DEFINITION_VERSION = "1.0"
     FIELDS = [
