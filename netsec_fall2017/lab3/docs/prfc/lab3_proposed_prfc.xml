@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+
+<!ENTITY RFC2119 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
+<!ENTITY RFC2360 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2360.xml">
+<!ENTITY RFC2629 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2629.xml">
+<!ENTITY RFC3552 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.3552.xml">
+<!ENTITY RFC5226 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.5226.xml">
+]>
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+
+<?rfc strict="yes" ?>
+
+<?rfc toc="yes"?>
+
+<?rfc tocdepth="4"?>
+
+<?rfc symrefs="yes"?>
+
+<?rfc sortrefs="yes" ?>
+
+<?rfc compact="yes" ?>
+
+<?rfc subcompact="no" ?>
+
+<rfc category="std" docName="rfc2" ipr="playgroundStd_v1_0" number="2">
+
+
+  <front>
+    <title abbrev="Lab3PRFC">Lab 3 Playground Request For Comments</title>
+    <author fullname="Evan Hsia" initials="E.H." role="editor" surname="Hsia">
+      <organization>JHU Network Security Fall 2017</organization>
+      <address>
+        <postal>
+          <street>Johns Hopkins University 122 Malone Hall/3400 North Charles St.</street>
+          <city>Baltimore</city>
+          <region>MD</region>
+          <code>21218</code>
+          <country>USA</country>
+        </postal>
+        <phone>+1 860-519-4112</phone>
+        <email>ehsia1@jhu.edu</email>
+      </address>
+    </author>
+    <date year="2017" month="November"/>
+    <area>General</area>
+    <workgroup>WHOAMI</workgroup>
+    <keyword>PRFC</keyword>
+    <abstract>
+      <t>PLS (Playground Layer Security Protocol) is a "middleware" protocol intended
+      to provide secure transmission between two communicating applications. The
+      protocol is composed a six-way handshake, data transmission, and termination.
+      This document describes the functions to be performed by the PLS layer and the
+      program that implements it.</t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section title="Introduction">
+      <t>The purpose of lab 3 is to design and implement a security layer to be
+      used in the PLAYGROUND framework, designed by Dr. Seth James Nielson to give
+      students an environment to learn about internet security attacks and defenses
+      on a much smaller scale.</t>
+
+      <t>In particular, the security layer in lab 3, dubbed PLS (Playground Layer
+      Security Protocol) consists of the following parts: a six-way handshake to
+      establish connection betweeen a server side application and a client side
+      application, data transmission between the two protocols, and a termination
+      that either protocol can initiate to close the session, either when the
+      data is collected or in response to an error. This PRFC will go into more
+      detail about each process and descriptions of the PLS packets and error handling.</t>
+
+      <section title="Requirements Language">
+        <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+        "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+        document are to be interpreted as described in <xref
+        target="RFC2119">RFC 2119</xref>.</t>
+      </section>
+    </section>
+    <section title="Packet Description">
+      <t>In this section, we will describe in detail each packet used in the PLS
+      layer. How each packet will be used, however, will be described in more
+      detail in a later section.</t>
+
+      <t>All PLS packets are descendents of the PacketType class from Playground,
+      and as such the fields inherit the types that Playground defines: UINT, INT,
+      STRING, BOOL, BUFFER, and LIST. Here, BUFFER, LIST, STRING, and variations
+      of UINT, were used in the field types.</t>
+      <section title="PlsHello Packet">
+        <t>The PlsHello packet is a packet used specifically during session establishment
+        as a means of connecting the client and server. This packet MUST contain 2 fields:
+        a UINT64 "Nonce" and a LIST of BUFFERs "Certs".</t>
+
+        <t>Each "Nonce" is a 64 bit random integer. "Certs" is a list of certificates
+        required for authorization, with the first one being the certificate of the
+        client or the server, depending on which one sent the packet.</t>
+      </section>
+      <section title="PlsKeyExchange Packet">
+        <t>The PlsKeyExchange packet is used after the PlsHello packets are sent.
+        Each packet MUST contain two fields: a "PreKey" of type BUFFER, and
+        "NoncePlusOne" of type UINT64.</t>
+
+        <t>The "PreKey" is a 128 bits of data that will be used by the client and
+        the server to generate keys. The specifics of this process will be discussed
+        later. The "PreKey" is encrypted under the public key contained in the
+        other protocol's certificate (so, if it is the client's PreKey, it will
+        be encrypted under the public key of the server). "NoncePlusOne" is just
+        the value of the Nonce of the other protocol (so, if we are discussing
+        the client's PlsKeyExchange packet, then we take the Nonce of the server)
+        plus one.</t>
+      </section>
+      <section title="PlsHandshakeDone Packet">
+        <t>The PlsHandshakeDone packet is sent by both the client and server to signal
+        that the handshake has finished and the session is established. It contains
+        one field: "ValidationHash" of type BUFFER.</t>
+
+        <t>The "ValidationHash" is the hash of the previous packets used in the
+        handshake: the PlsHello and PlsKeyExchange packets that both the client
+        and server used. So it hashes four packets in total, since both the client
+        and server send one packet of each type.</t>
+      </section>
+      <section title="PlsData Packet">
+        <t>The PlsData packet is sent during data transmission after the handshake
+        is completed. In order to be considered a PlsData packet, the packet MUST
+        contain a "Ciphertext" field of type BUFFER and a "MAC" field of type
+        BUFFER.</t>
+
+        <t>The "Ciphertext" gets generated by sending the plaintext data through
+        the client's or server's encryption engine. The "MAC" gets generated by sending
+        the "Ciphertext" through the client's or server's MAC engine.</t>
+
+        <t>The data transmission will be discussed in more detail later.</t>
+      </section>
+      <section title="PlsClose Packet">
+        <t>The PlsClose packet is sent by either the client or the server to close
+        the session. It contains an optional field "Error" of type STRING.</t>
+
+        <t>When all the data is finished transmitting, either the client or the
+        server can close the session by sending a PlsClose packet. If it is a normal
+        shutdown, then it omits the error message in the "Error" field. If either client
+        or server receive an error message at any point, they MUST close the session
+        and include an error message in the "Error" field.</t>
+      </section>
+    </section>
+    <section title="Session Life">
+      <t>Just like in other layers, there MUST be sessions to handle the case where
+      multiple client protocols try connecting to the same server, and to handle
+      the case where the server does not terminate properly when a client finishes
+      sending information. Even if different ports are used, the old protocol will
+      still exist in memory. Each session MUST include session establishment,
+      data transmission, and session termination.</t>
+      <section title="Session Establishment">
+        <t>Session establishment MUST use a six-way handshake. The process starts
+        with the client sendind a PlsHello packet to the server. The "Nonce" is a
+        64-bit random number and the "Certs" is a list of certificates required for
+        authorization, with the first one being the certificate of the client.</t>
+
+        <t>The server then replies with a PlsHello packet of its own. The "Nonce"
+        is another 64-bit random number and the "Certs" field is another list of
+        certificates required for authorization, with the first one being the
+        certificate of the server.</t>
+
+        <t>The certificate authorization will be explained in more detail later.</t>
+
+        <t>The client then responds with a PlsKeyExchange packet. The server then
+        responds with a PlsKeyExchange packet of its own. The "PreKeys" are generated
+        as follows: the client uses RSA-2048 with OAEP padding of the server public key,
+        and the server uses RSA-2048 with OAEP padding of the client public key. The
+        rest of the key generation is explained later.</t>
+
+        <t>The client proceeds to send a PlsHandshakeDone packet after the PlsKeyExchange
+        packets are sent and received. The server also sends a PlsHandshakeDone packet at
+        this time. These packets can be sent simultaneously since they both contain hashes of
+        the packets before this step, so they are not contingent on each other.</t>
+        <section title="Certificate Authorization">
+          <t>To generate the certificates needed in the PlsHello packets, there are six
+          certificates we MUST consider: the root cert, the group cert that is signed by
+          the root cert, a client private key, a server private key, a client cert signed
+          by the group cert and a server cert signed by the group cert.</t>
+
+          <t>The root cert is given and signs the group cert. The private keys are
+          generated using RSA-2048. Next, the certificate signing request is made. In
+          the certificate signing request, the following information is entered (example
+          information is used):</t>
+          <t>Country Name (2 letter code): US</t>
+          <t>State or Province Name: MD</t>
+          <t>Locality Name (city): Baltimore</t>
+          <t>Organizational Name (ex. company): JHUNetworkSecurityFall2017</t>
+          <t>Organization Unit Name (ex. section): PETF</t>
+          <t>Common Name(ex. server FQDN or YOUR name): 20174.1.n</t>
+          <t>Email Address: ehsia1@jhu.edu</t>
+          <t>Challenge: [LEAVE BLANK]</t>
+          <t>Company: Evan Hsia</t>
+          <t></t>
+          <t>The "n" in Common Name is a random number between 1 and 65536, coming
+          from the PLAYGROUND address. This generates the certificate signing request.</t>
+
+          <t>The certificate signing request file with the value for n MUST then be signed
+          by a CA and returned.</t>
+
+          <t>More CSRs can be generated by following the same process, but with the Common Name
+          adjusted to be 20174.1.n.x, where "x" is any number. After these are generated, they
+          MUST still be signed by the private key of an intermediate CA. These CSRs are optional and
+          depend on implementation.</t>
+        </section>
+        <section title="Key Derivation">
+          <t>The client needs to generate a client encryption key, a server encryption
+          key which serves as the client's decryption key, a client MAC key and a server
+          MAC key which serves as the client's verification key. The server needs to
+          generate the same 4 keys, with the roles being flipped (so the client MAC key
+          serves as the server's verification key and the client's encryption key serves
+          as the server's decryption key). Each key is 128 bits. Each side also generates
+          an encryption IV of size 128 bits.</t>
+
+          <t>To generate each key, we go through a hashing process. We generate
+          a stream using repeated SHA1 hashing of the seed "PLS1.0" + Nc + Ns +
+          PKc + PKs. Each hash generates 160 bits. The first hash is the hashing
+          of "PLS1.0 + Nc + Ns + PKc + PKs" with Nc and Ns being the Nonce of the client
+          and of the server, respectively, and PKc and PKs being the PreKeys of the
+          client and server, respectively. Each of the next four hashes is the result
+          of hashing the previous hash (for example, the second hash is the hash of
+          the first hash and so on). This stream is now 800 bits.</t>
+
+          <t>The keys then get created as follows: the encryption key of the client
+          is the first 128 bits, the encryption key of the server is the next 128 bits,
+          the IV of the client is the next 128 bits, the IV of the server is the 128 bits
+          after, the MAC key of the client is the next 128 bits, and the MAC key of
+          the server is the next 128 bits. The final 32 bits is discarded.</t>
+        </section>
+        <section title="Error Handling">
+          <t>If either client or server detects an error, it should send a PlsClose
+          packet with an error message. The text of the error message is implementation
+          specific, but the presence of an error message indicates that it was not
+          a normal termination.</t>
+        </section>
+      </section>
+      <section title="Data Transmission">
+        <t>After the handshake is completed and the session is created, data transmission
+        can begin. Each side creates an encryption and a decryption engine that differs
+        for each side.</t>
+
+        <t>For the client, the encryption engine is configured with the client encryption
+        key and the client IV as the initial counter value. The decryption engine is
+        configured with the server encryption key as the key and server IV as the
+        initial counter value.</t>
+
+        <t>The server follows the same process with the client and server keys reversed.
+        So the encryption engine uses the server encryption key and server IV, and the
+        decryption engine uses the client encryption key and IV.</t>
+
+        <t>Each side also creates an HMAC-SHA1 MAC engine and a Verification engine.
+        The MAC engine is generated using the protocol's own MAC key and the Verification
+        engine is created based on the other protocol's MAC key.</t>
+
+        <t>To actually send data, plain text is encrypted through the encryption engine
+        to create the Ciphertext of the data packet, and then the Ciphertext is passed
+        through the MAC engine to produce the Verification of the data packet. Then
+        the packet is sent.</t>
+
+        <t>When data is received, the protocol extracts the Ciphertext from the packet
+        and passes it to the verification engine to see if it matches the Verification
+        of the packet. If it does not, the packet is discarded, but the connection
+        is not necessarily closed. Closing here depends on the implementation. If
+        the implementation chooses to close the session, it MUST send a PlsClose packet
+        with an error message.</t>
+
+        <t>If the Ciphertext is verified, then it is passed to the decryption engine to
+        produce the plaintext. Then the data is passed to the higher layer.</t>
+
+        <t>All data is encrypted using AES-128 in CTR mode during this time. The encryption engine
+        should be configured with the IV of the protocol as the initial counter.</t>
+
+        <t>Data sent MUST be encrypted with the encryption key of the protocol. The
+        Ciphertext is sent through the appropriate MAC engine using HMAC-SHA1 to verify.</t>
+        <section title="Error Handling">
+          <t>At any point, if either the client or the server receives an error,
+          the protocol MUST send a PlsClose packet with an implementation specific
+          error message to terminate the session.</t>
+        </section>
+      </section>
+      <section title="Session Termination">
+        <t>Either the client or the server can initiate the closing of the session
+        by sending a PlsClose packet. This will happen in two cases.</t>
+
+        <t>The first case is a normal shutdown. All the data has finished being
+        transmitted, and the client or the server wishes to close the session. To
+        do so, a PlsClose packet is sent, but the error message is omitted. The
+        connection is then closed.</t>
+
+        <t>The second case is an error case. If at any point either the client or
+        the server receives an error from the other side, during the handshake or
+        during data transmission, the protocol MUST send a PlsClose packet with
+        an implementation specific error message. This terminates the session and
+        lets the other side know why the session was closed.</t>
+      </section>
+    </section>
+  </middle>
+
+  <back>
+    <references title="Normative References">
+      &RFC2119;
+    </references>
+  </back>
+</rfc>
