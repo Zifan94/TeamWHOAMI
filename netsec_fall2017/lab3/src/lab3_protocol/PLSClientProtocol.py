@@ -25,7 +25,7 @@ class PLSClientProtocol(PLSProtocol):
 
         if self.logging:
             print("PLS %s Protocol: Init Compelete..." % (self.Side_Indicator))
-        self._deserializer = PacketType.Deserializer()
+        self._deserializer = PacketBaseType.Deserializer()
         super().__init__
         self.transport = None
         self.state = "Initial_State_0"
