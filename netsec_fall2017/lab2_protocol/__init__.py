@@ -1,5 +1,4 @@
 from . import src
-from . import lab2_test
 import playground
 
 from .src.lab2_protocol import *
