@@ -9,3 +9,4 @@ sf = StackingProtocolFactory(lambda: PEEPServerProtocol())
 
 lab_connector = playground.Connector(protocolStack=(cf, sf))
 playground.setConnector('lab2_protocol', lab_connector)
+playground.setConnector('WHOAMI_protocol', lab_connector)
