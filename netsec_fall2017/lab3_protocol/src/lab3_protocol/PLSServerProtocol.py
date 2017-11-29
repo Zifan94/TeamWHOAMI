@@ -12,7 +12,6 @@ import base64
 import playground
 import random
 import asyncio
-ROOT = "/home/netsec/Desktop/Cert/"
 
 class PLSServerProtocol(PLSProtocol):
 
@@ -43,9 +42,7 @@ class PLSServerProtocol(PLSProtocol):
 
     def send_Server_Hello_Packet(self):
         self.nonceS = random.randint(1, 2 ** 64)
-        certs=[]
-        certs.append(CertFactory.getCertsForAddr(ROOT+"signed-server.cert"))
-        certs.append(CertFactory.getCertsForAddr(ROOT+"signed.cert"))
+        certs = CertFactory.getCertsForAddr("20174.1.636.200")
         # certs.append(b"cert server") # use fake cert for now
         outBoundPacket = PlsHello.create(self.nonceS, certs)
         if self.logging:
@@ -56,7 +53,9 @@ class PLSServerProtocol(PLSProtocol):
         self.transport.write(packetBytes)
 
     def send_key_exchange(self):
-        self.pkS = b"hahahahahahaha 123123"#TODO
+        self.pkS = self.CreatePrekey()
+        print("pkS:",self.pkS)
+        print("len",len(self.pkS))
         rsakey = RSA.importKey(self.publickey)
         cipher = PKCS1_OAEP.new(rsakey)
         cipher_text = cipher.encrypt(self.pkS)
@@ -69,7 +68,7 @@ class PLSServerProtocol(PLSProtocol):
             print("\nPLS %s Protocol: 4. %s_PlsKeyExchange sent\n"%(self.Side_Indicator,self.Side_Indicator))
 
     def decrypt_RSA(self, Perkey):
-        privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr(ROOT+"server-prikey"))
+        privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr("20174.1.636.200"))
         privobj = PKCS1_OAEP.new(privobj)
         self.pkC = privobj.decrypt(Perkey)
         # print(self.pkC)

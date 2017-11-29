@@ -4,6 +4,8 @@ from playground.network.common import StackingProtocol, StackingTransport, Stack
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
 import hashlib
+import string
+import random
 from cryptography.x509 import load_pem_x509_certificate
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
@@ -32,13 +34,20 @@ class PLSProtocol(StackingProtocol):
     MAC_Engine = None
     Verification_Engine = None
 
+    def CreatePrekey(self):
+        md5 = hashlib.md5()
+        randomstring = ''.join(random.sample(string.ascii_letters + string.digits, 20))
+        print("string:",randomstring);
+        md5.update(randomstring.encode('utf-8'))
+        return md5.digest()
+
     def GetCommonName(self,cert):
         commonNameList = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
         if len(commonNameList) != 1: return None
         commonNameAttr = commonNameList[0]
         return commonNameAttr.value
 
-    def authentication(self,certs):#TODO
+    def authentication(self,certs):
         listCertificates = [getCertFromBytes(certs[0]), getCertFromBytes(certs[1]), getCertFromBytes(CertFactory.getRootCert())]
         verifier = True
         #verify whether peeraddress equals commonname
@@ -55,13 +64,13 @@ class PLSProtocol(StackingProtocol):
             return False
         print("CommonName:",self.commonname)
 
-      #  if (self.peeraddress != self.commonname) :
-      #      verifier = False
-      #      if self.logging:
-      #          print("PLS %s Protocol: Error: PeerAdress and CommonName not match!" % self.Side_Indicator)
-      #      self.state = "error_state"
-      #      self.send_PlsClose("PeerAdress and CommonName not match!")
-      #      return False
+        #if (self.peeraddress != self.commonname) :
+        #    verifier = False
+        #    if self.logging:
+        #        print("PLS %s Protocol: Error: PeerAdress and CommonName not match!" % self.Side_Indicator)
+        #    self.state = "error_state"
+        #    self.send_PlsClose("PeerAdress and CommonName not match!")
+        #    return False
             
         #Make sure that each CA is a prefix of the lower certificate
         self.commonname1 = self.GetCommonName(listCertificates[1])
