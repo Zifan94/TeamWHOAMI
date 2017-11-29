@@ -1,27 +1,27 @@
-
+ROOTADDR = "/home/netsec/Desktop/Cert/root.crt"
 
 class CertFactory:
 
     @staticmethod
-    def getPrivateKeyForAddr(file):
-        root = "/home/elroy/Cert/"
+    def getPrivateKeyForAddr(addr):
+        #root = "/home/netsec/Desktop/Cert/"
         print("getting [private key] now","rb")
-        with open(root+file)as fp:
+        with open(addr)as fp:
             private_key_user = fp.read()
         return private_key_user
 
     @staticmethod
-    def getCertsForAddr(file):
-        root = "/home/elroy/Cert/"
+    def getCertsForAddr(addr): #TODO according to Piazza
+        #root = "/home/netsec/Desktop/Cert/"
         print("getting [certification] now")
-        with open(root+file, 'rb')as fp:
-            private_key_user = fp.read()
-        return private_key_user
+        with open(addr, 'rb')as fp:
+            cert = fp.read()
+        return cert
 
     @staticmethod
     def getRootCert():
         # Enter the location of the Private key as per the location of the
         # system
-        with open("/home/elroy/Cert/root.crt","rb")as fp:
-            private_key_user = fp.read()
-        return private_key_user
+        with open(ROOTADDR,"rb")as fp:
+            rootcert = fp.read()
+        return rootcert

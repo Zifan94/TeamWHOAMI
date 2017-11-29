@@ -32,9 +32,61 @@ class PLSProtocol(StackingProtocol):
     MAC_Engine = None
     Verification_Engine = None
 
-    def authentication(self, certs):
+    def GetCommonName(self,cert):
+        commonNameList = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+        if len(commonNameList) != 1: return None
+        commonNameAttr = commonNameList[0]
+        return commonNameAttr.value
+
+    def authentication(self,certs):#TODO
         listCertificates = [getCertFromBytes(certs[0]), getCertFromBytes(certs[1]), getCertFromBytes(CertFactory.getRootCert())]
         verifier = True
+        #verify whether peeraddress equals commonname
+        self.peeraddress = self.transport.get_extra_info("peername")[0]
+        print("PeerAddress:",self.peeraddress)
+
+        self.commonname = self.GetCommonName(listCertificates[0])
+        if (self.commonname == None) :
+            verifier = False
+            if self.logging:
+                print("PLS %s Protocol: Error: Wrong CommonName!" % self.Side_Indicator)
+            self.state = "error_state"
+            self.send_PlsClose("Wrong CommonName!")
+            return False
+        print("CommonName:",self.commonname)
+
+      #  if (self.peeraddress != self.commonname) :
+      #      verifier = False
+      #      if self.logging:
+      #          print("PLS %s Protocol: Error: PeerAdress and CommonName not match!" % self.Side_Indicator)
+      #      self.state = "error_state"
+      #      self.send_PlsClose("PeerAdress and CommonName not match!")
+      #      return False
+            
+        #Make sure that each CA is a prefix of the lower certificate
+        self.commonname1 = self.GetCommonName(listCertificates[1])
+        self.commonname2 = self.GetCommonName(listCertificates[2])
+
+        print("commom1:",self.commonname1)
+        if not self.commonname.startswith(self.commonname1):
+            verifier = False
+            if self.logging:
+                print("PLS %s Protocol: Error: The common name of each successive CA MUST be a prefix of previous certificate, CommonName %s and CommonName1 %s" % (self.Side_Indicator,self.commonname,self.commonname1))
+            self.state = "error_state"
+            self.send_PlsClose("Prefix not match!")
+            return False
+
+        print("commom2:",self.commonname2)
+        if not self.commonname1.startswith(self.commonname2):
+            verifier = False
+            if self.logging:
+                print("PLS %s Protocol: Error: The common name of each successive CA MUST be a prefix of previous certificate, CommonName1 %s and CommonName2 %s" % (self.Side_Indicator,self.commonname1,self.commonname2))
+            self.state = "error_state"
+            self.send_PlsClose("Prefix not match!")
+            return False
+
+#You may want to consider some additional checks, such as validity date, issuer name, and so forth.
+
         for i in range(len(certs) - 1):
             this = listCertificates[i]
             issuer = RSA_SIGNATURE_MAC(listCertificates[i + 1].public_key())
@@ -47,6 +99,8 @@ class PLSProtocol(StackingProtocol):
         if not verifier:
             self.state = "error_state"
             self.send_PlsClose("Certs Verification not pass!")
+            return False
+        return True
 
     def extract_pulickey(self,certs):
         cert_obj = load_pem_x509_certificate(certs[0], default_backend())

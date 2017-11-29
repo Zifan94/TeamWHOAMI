@@ -12,7 +12,7 @@ import base64
 import playground
 import random
 import asyncio
-
+ROOT = "/home/netsec/Desktop/Cert/"
 
 class PLSServerProtocol(PLSProtocol):
 
@@ -44,8 +44,8 @@ class PLSServerProtocol(PLSProtocol):
     def send_Server_Hello_Packet(self):
         self.nonceS = random.randint(1, 2 ** 64)
         certs=[]
-        certs.append(CertFactory.getCertsForAddr("signed-server.cert"))
-        certs.append(CertFactory.getCertsForAddr("signed.cert"))
+        certs.append(CertFactory.getCertsForAddr(ROOT+"signed-server.cert"))
+        certs.append(CertFactory.getCertsForAddr(ROOT+"signed.cert"))
         # certs.append(b"cert server") # use fake cert for now
         outBoundPacket = PlsHello.create(self.nonceS, certs)
         if self.logging:
@@ -56,7 +56,7 @@ class PLSServerProtocol(PLSProtocol):
         self.transport.write(packetBytes)
 
     def send_key_exchange(self):
-        self.pkS = b"hahahahahahaha 123123"
+        self.pkS = b"hahahahahahaha 123123"#TODO
         rsakey = RSA.importKey(self.publickey)
         cipher = PKCS1_OAEP.new(rsakey)
         cipher_text = cipher.encrypt(self.pkS)
@@ -69,7 +69,7 @@ class PLSServerProtocol(PLSProtocol):
             print("\nPLS %s Protocol: 4. %s_PlsKeyExchange sent\n"%(self.Side_Indicator,self.Side_Indicator))
 
     def decrypt_RSA(self, Perkey):
-        privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr("server-prikey"))
+        privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr(ROOT+"server-prikey"))
         privobj = PKCS1_OAEP.new(privobj)
         self.pkC = privobj.decrypt(Perkey)
         # print(self.pkC)
@@ -97,11 +97,12 @@ class PLSServerProtocol(PLSProtocol):
                     else:
                         if self.logging:
                             print("PLS %s Protocol: Pls Hello Received: Nonce = %d" % (self.Side_Indicator, packet.Nonce))
-                        self.authentication(packet.Certs)
+                        isAuthenticated = self.authentication(packet.Certs)
                         self.extract_pulickey(packet.Certs)
                         self.nonceC = packet.Nonce
                         self.M1 = packet.__serialize__()
-                        self.send_Server_Hello_Packet()
+                        if isAuthenticated:
+                            self.send_Server_Hello_Packet()
 
                 ################# got a KeyExchange Packet ######################
                 elif isinstance(packet,PlsKeyExchange):

@@ -28,7 +28,7 @@ class PEEPClientProtocol(StackingProtocol):
 	CONNECTION_LOSE_TIME_LIMIT = 15
 	prepare_connection_lose_count_down = False
 
-	def __init__(self, logging=True):
+	def __init__(self, logging=False):
 		if logging:
 			print("PEEP Client Side: Init Compelete...")
 		self._deserializer = PEEPPacket.Deserializer()
