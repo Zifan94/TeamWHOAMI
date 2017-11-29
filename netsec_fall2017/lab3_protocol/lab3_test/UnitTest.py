@@ -4,6 +4,7 @@ from playground.network.packet.fieldtypes.attributes import *
 # from ..src.lab3_protocol import *
 from ..src.lab3_packets import *
 from ..src.lab3_protocol import *
+from ..CertFactory import CertFactory
 from playground.asyncio_lib.testing import TestLoopEx
 from playground.network.testing import MockTransportToStorageStream as MockTransport
 from playground.network.testing import MockTransportToProtocol
