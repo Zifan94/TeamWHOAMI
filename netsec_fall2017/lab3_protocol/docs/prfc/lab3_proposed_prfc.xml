@@ -94,7 +94,8 @@
 
         <t>Each "Nonce" is a 64 bit random integer. "Certs" is a list of certificates
         required for authorization, with the first one being the certificate of the
-        client or the server, depending on which one sent the packet.</t>
+        client or the server, depending on which one sent the packet. The last certificate
+        MAY be the root certificate. The rest MUST be any intermediate CA's in order.</t>
       </section>
       <section title="PlsKeyExchange Packet">
         <t>The PlsKeyExchange packet is used after the PlsHello packets are sent.
@@ -173,8 +174,30 @@
         packets are sent and received. The server also sends a PlsHandshakeDone packet at
         this time. These packets can be sent simultaneously since they both contain hashes of
         the packets before this step, so they are not contingent on each other.</t>
-        <section title="Certificate Authorization">
-          <t>To generate the certificates needed in the PlsHello packets, there are six
+        <section title="Certificate Chain Validation">
+          <t>The list of certificates sent by the PlsHello packets are as follows: Certs[0]
+          MUST be the certificate of the host, Certs[n] MAY be the root certificate, and
+          the certificates in between MUST be any intermediate CA's in order.</t>
+
+          <t>The common name of the subject name of Certs[0] MUST be the same as the
+          playground address of the host.</t>
+
+          <t>The common name of each successive CA MUST be a prefix of the previous certificate.
+          For example, if Certs[0] is 20174.1.100.200, then Certs[1] is 20174.1.100. The
+          root MUST be 20174.1, however.</t>
+
+          <t>Each certificate must be signed by the successive CA certificate back to the root.</t>
+
+          <t>Then, to validate the incoming certificates, the protocol MUST verify
+          that the common name of the subject name of the first certificate matches
+          the playground address of the incoming connection. It also MUST check that
+          each CA is a prefix of the lower certificate. And lastly, it MUST ensure
+          that each certificate is signed by the root certificate. More error checking
+          can be made based on implementation.</t>
+        </section>
+        <section title="Certificate Signing Request">
+          <t>To generate the certificates needed in the PlsHello packets, there exists
+          a certificate signing process which will be described in this section. There are six
           certificates we MUST consider: the root cert, the group cert that is signed by
           the root cert, a client private key, a server private key, a client cert signed
           by the group cert and a server cert signed by the group cert.</t>
