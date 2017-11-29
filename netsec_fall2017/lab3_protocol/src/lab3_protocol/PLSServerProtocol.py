@@ -54,8 +54,6 @@ class PLSServerProtocol(PLSProtocol):
 
     def send_key_exchange(self):
         self.pkS = self.CreatePrekey()
-        print("pkS:",self.pkS)
-        print("len",len(self.pkS))
         rsakey = RSA.importKey(self.publickey)
         cipher = PKCS1_OAEP.new(rsakey)
         cipher_text = cipher.encrypt(self.pkS)
