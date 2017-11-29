@@ -144,7 +144,7 @@ if __name__ =="__main__":
 
 	print("----- NEW CONNECTOR SETUP on Serve Side-----")
 
-	coro = playground.getConnector('lab3_protocol').create_playground_server(lambda: VerificationCodeServerProtocol(loop), 101)
+	coro = playground.getConnector('WHOAMI_lab3_protocol').create_playground_server(lambda: VerificationCodeServerProtocol(loop), 101)
 
 	server = loop.run_until_complete(coro)
 	try:

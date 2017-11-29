@@ -29,9 +29,9 @@ class PEEPServerProtocol(StackingProtocol):
 	CONNECTION_LOSE_TIME_LIMIT = 15
 	prepare_connection_lose_count_down = False
 
-	def __init__(self, logging=False):
-		if logging:
-			print("PEEP Server Side: Init Compelete...")
+	def __init__(self, logging=True):
+		#if logging:
+		print("PEEP Server Side: Init Compelete...")
 		self._deserializer = PEEPPacket.Deserializer()
 		super().__init__
 		self.transport = None
@@ -52,16 +52,16 @@ class PEEPServerProtocol(StackingProtocol):
 		self.sequenceNumber = seq
 
 	def connection_made(self, transport):
-		if self.logging:
-			print("PEEP Server Side: Connection Made...")
+		#if self.logging:
+		print("PEEP Server Side: Connection Made...")
 		self.transport = transport
 
 	def connection_lost(self, exc=None):
 		if self.isMock == False:
 			self.higherProtocol().connection_lost(None)
 		self.transport = None
-		if self.logging:
-			print("PEEP Server Side: Connection Lost...")
+		#if self.logging:
+		print("PEEP Server Side: Connection Lost...")
 
 	def timeout_checker(self, retrans_packet, wrong_current_state):
 		if self.state == wrong_current_state:

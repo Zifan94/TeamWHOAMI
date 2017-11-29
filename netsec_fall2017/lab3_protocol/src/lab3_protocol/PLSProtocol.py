@@ -37,7 +37,7 @@ class PLSProtocol(StackingProtocol):
     def CreatePrekey(self):
         md5 = hashlib.md5()
         randomstring = ''.join(random.sample(string.ascii_letters + string.digits, 20))
-        print("string:",randomstring);
+        print("string:",randomstring)
         md5.update(randomstring.encode('utf-8'))
         return md5.digest()
 

@@ -150,7 +150,7 @@ if __name__ =="__main__":
 
 	print("----- NEW CONNECTOR SETUP on Client Side-----")
 
-	coro = playground.getConnector('lab3_protocol').create_playground_connection(lambda: VerificationCodeClientProtocol(1, loop), "20174.1.1.1", 101)
+	coro = playground.getConnector('WHOAMI_lab3_protocol').create_playground_connection(lambda: VerificationCodeClientProtocol(1, loop), "20174.1.1.1", 101)
 	transport, protocol = loop.run_until_complete(coro)
 	protocol.send_request_packet()
 	loop.run_forever()
