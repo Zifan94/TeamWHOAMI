@@ -12,7 +12,9 @@ import base64
 import playground
 import random
 import asyncio
-ROOT = "/home/netsec/Desktop/Cert/"
+#ROOT = "/home/netsec/Desktop/Cert/"
+ROOT = "/home/zifan/Cert/"
+#ROOT = "/home/elroy/Cert/"
 
 class PLSServerProtocol(PLSProtocol):
 

@@ -28,9 +28,9 @@ class PEEPClientProtocol(StackingProtocol):
 	CONNECTION_LOSE_TIME_LIMIT = 15
 	prepare_connection_lose_count_down = False
 
-	def __init__(self, logging=False):
-		if logging:
-			print("PEEP Client Side: Init Compelete...")
+	def __init__(self, logging=True):
+		#if logging:
+		print("PEEP Client Side: Init Compelete...")
 		self._deserializer = PEEPPacket.Deserializer()
 		super().__init__
 		self.transport = None
@@ -51,8 +51,8 @@ class PEEPClientProtocol(StackingProtocol):
 		self.sequenceNumber = seq
 
 	def connection_made(self, transport):
-		if self.logging:
-			print("PEEP Client Side: Connection Made...")
+		#if self.logging:
+		print("PEEP Client Side: Connection Made...")
 		self.transport = transport
 		self.send_request_packet()
 
@@ -104,8 +104,8 @@ class PEEPClientProtocol(StackingProtocol):
 		if self.isMock == False:
 			self.higherProtocol().connection_lost(None)
 		self.transport = None
-		if self.logging:
-			print("PEEP Client Side: Connection Lost...")
+		#if self.logging:
+		print("PEEP Client Side: Connection Lost...")
 
 	def __data_packet_handler(self,packet):
 		if self.state != "Transmission_State_2" or self.peeptransport.receiving_Flag == False:
