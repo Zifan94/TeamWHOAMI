@@ -1,5 +1,5 @@
 import playground
-from netsec_fall2017.lab2.src.lab2_protocol import *
+from netsec_fall2017.lab2_protocol.src.lab2_protocol import *
 from playground.network.common import StackingProtocolFactory
 
 cf = StackingProtocolFactory(lambda: PEEPClientProtocol())
