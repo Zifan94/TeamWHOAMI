@@ -3,7 +3,7 @@
 # print(sys.path)
 from playground.network.packet import PacketType
 from playground.network.packet.fieldtypes import UINT32, STRING, BUFFER, BOOL
-from ..lab2.src.lab2_packets import *
+from ..lab2_protocol.src.lab2_packets import *
 from playground.network.common import StackingProtocol, StackingTransport, StackingProtocolFactory
 from playground.common import logging as p_logging
 
@@ -138,7 +138,7 @@ class VerificationCodeServerProtocol(asyncio.Protocol):
 
 
 if __name__ =="__main__":
-	# p_logging.EnablePresetLogging(p_logging.PRESET_TEST)
+	#p_logging.EnablePresetLogging(p_logging.PRESET_TEST)
 	loop = asyncio.get_event_loop()
 	loop.set_debug(enabled = True)
 

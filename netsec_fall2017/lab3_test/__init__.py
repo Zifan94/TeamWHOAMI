@@ -1,8 +1,8 @@
-from ..lab2.src.lab2_protocol.PEEPClientProtocol import PEEPClientProtocol
-from ..lab2.src.lab2_protocol.PEEPServerProtocol import PEEPServerProtocol
+from ..lab2_protocol.src.lab2_protocol.PEEPClientProtocol import PEEPClientProtocol
+from ..lab2_protocol.src.lab2_protocol.PEEPServerProtocol import PEEPServerProtocol
 
-from ..lab3.src.lab3_protocol.PLSClientProtocol import PLSClientProtocol
-from ..lab3.src.lab3_protocol.PLSServerProtocol import PLSServerProtocol
+from ..lab3_protocol.src.lab3_protocol.PLSClientProtocol import PLSClientProtocol
+from ..lab3_protocol.src.lab3_protocol.PLSServerProtocol import PLSServerProtocol
 
 from . import VerificationCodeClientProtocol
 from . import VerificationCodeServerProtocol

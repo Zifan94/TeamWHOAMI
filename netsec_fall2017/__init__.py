@@ -1,3 +1,3 @@
-from . import lab2
-from . import lab3
+from . import lab2_protocol
+from . import lab3_protocol
 from . import lab3_test
