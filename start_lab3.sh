@@ -8,7 +8,7 @@ case $1 in
     "run" )
         case $2 in
             "test" )
-                python3 -m netsec_fall2017.lab3.lab3_test.UnitTest
+                python3 -m netsec_fall2017.lab3_protocol.lab3_test.UnitTest
                 exit
             ;;
 
