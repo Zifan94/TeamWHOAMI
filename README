@@ -3,7 +3,10 @@ TEAM MEMBER: Bowen Shi(Leader), Ying Liu, Zifan Yang, Evan Hsia
 ===============================================================================
 In order to run Lab3_protocol, you need to install:
 sudo apt-get install build-essential libssl-dev libffi-dev python3-dev
-pip install pycrypto
+pip3 install pycrypto
+
+Directly copy our lab3_protocol into connects, its already include lab2_protocol in the folder, then run the echotest.
+You can use "lab3_protocol" or "WHOAMI_lab3_protocol" as the connect name.
 
 ===============================================================================
 

@@ -64,13 +64,13 @@ class PLSProtocol(StackingProtocol):
             return False
         print("CommonName:",self.commonname)
 
-        #if (self.peeraddress != self.commonname) :
-        #    verifier = False
-        #    if self.logging:
-        #        print("PLS %s Protocol: Error: PeerAdress and CommonName not match!" % self.Side_Indicator)
-        #    self.state = "error_state"
-        #    self.send_PlsClose("PeerAdress and CommonName not match!")
-        #    return False
+        if (self.peeraddress != self.commonname) :
+            verifier = False
+            if self.logging:
+                print("PLS %s Protocol: Error: PeerAdress and CommonName not match!" % self.Side_Indicator)
+            self.state = "error_state"
+            self.send_PlsClose("PeerAdress and CommonName not match!")
+            return False
             
         #Make sure that each CA is a prefix of the lower certificate
         self.commonname1 = self.GetCommonName(listCertificates[1])
