@@ -8,7 +8,7 @@ class CertFactory:
         #root = "/home/netsec/Desktop/Cert/"
         print("getting [private key] now","rb")
         if addr == "20174.1.636.300":
-            with open(root+"netsec_fall/Cert/client-prikey")as fp:
+            with open(root+"/netsec_fall2017/lab3_protocol/Cert/client-prikey")as fp:
                 private_key_user = fp.read()
             return private_key_user
         if addr == "20174.1.636.200":
