@@ -3,6 +3,7 @@ from Crypto.Util import Counter
 from Crypto.Hash import SHA, HMAC
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, hmac
 import os
 
 class EncryptionEngine():
@@ -51,9 +52,12 @@ class MACEngine():
 		# self.new_MAC = HMAC.new(key = self.MK, msg = None, digestmod = SHA)
 
 	def calc_MAC(self, Ciphertext):
-		new_MAC = HMAC.new(self.MK, Ciphertext, SHA)
+		# new_MAC = HMAC.new(self.MK, Ciphertext, SHA)
+		# new_MAC.update(Ciphertext)
+		# return new_MAC.digest()
+		new_MAC = hmac.HMAC(self.MK, hashes.SHA1(), backend = default_backend())
 		new_MAC.update(Ciphertext)
-		return new_MAC.digest()
+		return new_MAC.finalize()
 
 
 
@@ -67,6 +71,9 @@ class VerificationEngine():
 		# self.new_MAC = HMAC.new(key = self.MK, msg = None, digestmod = SHA)
 
 	def calc_MAC(self, Ciphertext):
-		new_MAC = HMAC.new(self.MK, Ciphertext, SHA)
+		# new_MAC = HMAC.new(self.MK, Ciphertext, SHA)
+		# new_MAC.update(Ciphertext)
+		# return new_MAC.digest()
+		new_MAC = hmac.HMAC(self.MK, hashes.SHA1(), backend = default_backend())
 		new_MAC.update(Ciphertext)
-		return new_MAC.digest()
+		return new_MAC.finalize()
