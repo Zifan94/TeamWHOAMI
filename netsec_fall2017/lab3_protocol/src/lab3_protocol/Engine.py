@@ -10,11 +10,11 @@ class EncryptionEngine():
 	def __init__(self, EK, IV):
 		self.EK = EK
 		self.IV = IV
+		encrypt_counter = Counter.new(128, initial_value = int.from_bytes(self.IV, byteorder='big'))
+		self.AES_Factory = AES.new(self.EK, mode = AES.MODE_CTR, counter = encrypt_counter)
 
 	def encrypt(self, Plaintext):
-		encrypt_counter = Counter.new(128, initial_value = int.from_bytes(self.IV, byteorder='big'))
-		AES_Factory = AES.new(self.EK, mode = AES.MODE_CTR, counter = encrypt_counter)
-		new_Ciphertext = AES_Factory.encrypt(Plaintext)
+		new_Ciphertext = self.AES_Factory.encrypt(Plaintext)
 		return new_Ciphertext
 
 
@@ -27,11 +27,11 @@ class DecryptionEngine():
 	def __init__(self, EK, IV):
 		self.EK = EK
 		self.IV = IV
+		decrypt_counter = Counter.new(128, initial_value = int.from_bytes(self.IV, byteorder='big'))
+		self.AES_Factory = AES.new(self.EK, mode = AES.MODE_CTR, counter = decrypt_counter)
 
 	def decrypt(self, Ciphertext):
-		decrypt_counter = Counter.new(128, initial_value = int.from_bytes(self.IV, byteorder='big'))
-		AES_Factory = AES.new(self.EK, mode = AES.MODE_CTR, counter = decrypt_counter)
-		new_Plaintext = AES_Factory.decrypt(Ciphertext)
+		new_Plaintext = self.AES_Factory.decrypt(Ciphertext)
 		return new_Plaintext
 
 
@@ -42,12 +42,12 @@ class MACEngine():
 
 	def __init__(self, MK):
 		self.MK = MK
-		self.new_MAC = HMAC.new(key = self.MK, msg = None, digestmod = SHA)
+		# self.new_MAC = HMAC.new(key = self.MK, msg = None, digestmod = SHA)
 
 	def calc_MAC(self, Ciphertext):
-		#new_MAC = HMAC.new(self.MK, Ciphertext, SHA)
-		self.new_MAC.update(Ciphertext)
-		return self.new_MAC.digest()
+		new_MAC = HMAC.new(self.MK, Ciphertext, SHA)
+		new_MAC.update(Ciphertext)
+		return new_MAC.digest()
 
 
 
@@ -58,9 +58,9 @@ class VerificationEngine():
 
 	def __init__(self, MK):
 		self.MK = MK
-		self.new_MAC = HMAC.new(key = self.MK, msg = None, digestmod = SHA)
+		# self.new_MAC = HMAC.new(key = self.MK, msg = None, digestmod = SHA)
 
 	def calc_MAC(self, Ciphertext):
-		# new_MAC = HMAC.new(self.MK, Ciphertext, SHA)
-		self.new_MAC.update(Ciphertext)
-		return self.new_MAC.digest()
+		new_MAC = HMAC.new(self.MK, Ciphertext, SHA)
+		new_MAC.update(Ciphertext)
+		return new_MAC.digest()
