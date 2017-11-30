@@ -1,5 +1,9 @@
 TEAM: WHOAMI
 TEAM MEMBER: Bowen Shi(Leader), Ying Liu, Zifan Yang, Evan Hsia
+===============================================================================
+In order to run Lab3_protocol, you need to install:
+sudo apt-get install build-essential libssl-dev libffi-dev python3-dev
+pip install pycrypto
 
 ===============================================================================
 

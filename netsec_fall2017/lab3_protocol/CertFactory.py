@@ -20,7 +20,6 @@ class CertFactory:
     @staticmethod
     def getCertsForAddr(addr):
         root = os.path.dirname(os.path.abspath('CertFactory.py'))
-        print("aaaa%s"%root)
         #root = "/home/netsec/Desktop/Cert/"
         chain = []
         print("getting [certification] now")

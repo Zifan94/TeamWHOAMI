@@ -3,7 +3,7 @@ from playground.network.packet.fieldtypes import UINT64, UINT32, UINT16, UINT8, 
 from .PLSProtocol import *
 from ..lab3_packets import *
 from ..lab3_transport import *
-from ...CertFactory import *
+from ... import CertFactory
 from Crypto.Cipher import PKCS1_OAEP
 from playground.network.common import StackingProtocol, StackingTransport, StackingProtocolFactory
 from Crypto.Cipher import AES
@@ -32,6 +32,9 @@ class PLSServerProtocol(PLSProtocol):
         if self.logging:
             print("PLS %s Protocol: Connection Made..." % (self.Side_Indicator))
         self.transport = transport
+        self.address, self.port = transport.get_extra_info("sockname")
+        if self.logging:
+            print("PLS %s Protocol: ADDRESS: %s, PORT: %s" % (self.Side_Indicator, self.address, self.port))
 
 
     def connection_lost(self, exc=None):
@@ -42,7 +45,7 @@ class PLSServerProtocol(PLSProtocol):
 
     def send_Server_Hello_Packet(self):
         self.nonceS = random.randint(1, 2 ** 64)
-        certs = CertFactory.getCertsForAddr("20174.1.636.200")
+        certs = CertFactory.CertFactory.getCertsForAddr(self.address)
         # certs.append(b"cert server") # use fake cert for now
         outBoundPacket = PlsHello.create(self.nonceS, certs)
         if self.logging:
@@ -57,7 +60,7 @@ class PLSServerProtocol(PLSProtocol):
         rsakey = RSA.importKey(self.publickey)
         cipher = PKCS1_OAEP.new(rsakey)
         cipher_text = cipher.encrypt(self.pkS)
-        outBoundPacket = PlsKeyExchange.create(cipher_text, self.nonceS + 1)
+        outBoundPacket = PlsKeyExchange.create(cipher_text, self.nonceC + 1)
         packetBytes = outBoundPacket.__serialize__()
         self.state = "M4"
         self.M4 = packetBytes
@@ -66,7 +69,7 @@ class PLSServerProtocol(PLSProtocol):
             print("\nPLS %s Protocol: 4. %s_PlsKeyExchange sent\n"%(self.Side_Indicator,self.Side_Indicator))
 
     def decrypt_RSA(self, Perkey):
-        privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr("20174.1.636.200"))
+        privobj = RSA.importKey(CertFactory.CertFactory.getPrivateKeyForAddr(self.address))
         privobj = PKCS1_OAEP.new(privobj)
         self.pkC = privobj.decrypt(Perkey)
         # print(self.pkC)
@@ -109,7 +112,7 @@ class PLSServerProtocol(PLSProtocol):
                         self.state = "error_state"
                         self.send_PlsClose("state not match")
                     else:
-                        if self.nonceC +1 != packet.NoncePlusOne:
+                        if self.nonceS +1 != packet.NoncePlusOne:
                             if self.logging:
                                 print("PLS %s Protocol: Error: Nounce error! Should be %d but %d" % self.Side_Indicator,self.nonceC +1,packet.NoncePlusOne)
                             self.state = "error_state"
