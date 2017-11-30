@@ -3,7 +3,7 @@
 # print(sys.path)
 from playground.network.packet import PacketType
 from playground.network.packet.fieldtypes import UINT32, STRING, BUFFER, BOOL
-from ..lab2_protocol.src.lab2_packets import *
+from ..lab3_protocol.lab2_protocol.src.lab2_packets import *
 from playground.network.common import StackingProtocol, StackingTransport, StackingProtocolFactory
 from playground.common import logging as p_logging
 

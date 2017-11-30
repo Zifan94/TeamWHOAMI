@@ -4,7 +4,7 @@ from .CertFactory import *
 import playground
 
 from .src.lab3_protocol import *
-from ..lab2_protocol.src.lab2_protocol import *
+from .lab2_protocol.src.lab2_protocol import *
 from playground.network.common import StackingProtocolFactory
 
 cf = StackingProtocolFactory(lambda: PLSClientProtocol(), lambda: PEEPClientProtocol(logging = False))
