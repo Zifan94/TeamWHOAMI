@@ -1,5 +1,5 @@
-from ..lab2_protocol.src.lab2_protocol.PEEPClientProtocol import PEEPClientProtocol
-from ..lab2_protocol.src.lab2_protocol.PEEPServerProtocol import PEEPServerProtocol
+from ..lab3_protocol.lab2_protocol.src.lab2_protocol.PEEPClientProtocol import PEEPClientProtocol
+from ..lab3_protocol.lab2_protocol.src.lab2_protocol.PEEPServerProtocol import PEEPServerProtocol
 
 from ..lab3_protocol.src.lab3_protocol.PLSClientProtocol import PLSClientProtocol
 from ..lab3_protocol.src.lab3_protocol.PLSServerProtocol import PLSServerProtocol
