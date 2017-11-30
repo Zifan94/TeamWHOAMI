@@ -42,10 +42,12 @@ class MACEngine():
 
 	def __init__(self, MK):
 		self.MK = MK
+		self.new_MAC = HMAC.new(key = self.MK, msg = None, digestmod = SHA)
 
 	def calc_MAC(self, Ciphertext):
-		new_MAC = HMAC.new(self.MK, Ciphertext, SHA)
-		return new_MAC.digest()
+		#new_MAC = HMAC.new(self.MK, Ciphertext, SHA)
+		self.new_MAC.update(Ciphertext)
+		return self.new_MAC.digest()
 
 
 
@@ -56,7 +58,9 @@ class VerificationEngine():
 
 	def __init__(self, MK):
 		self.MK = MK
+		self.new_MAC = HMAC.new(key = self.MK, msg = None, digestmod = SHA)
 
 	def calc_MAC(self, Ciphertext):
-		new_MAC = HMAC.new(self.MK, Ciphertext, SHA)
-		return new_MAC.digest()
+		# new_MAC = HMAC.new(self.MK, Ciphertext, SHA)
+		self.new_MAC.update(Ciphertext)
+		return self.new_MAC.digest()
