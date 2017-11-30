@@ -33,7 +33,9 @@ class PLSClientProtocol(PLSProtocol):
         if self.logging:
             print("PLS %s Protocol: Connection Made..." % (self.Side_Indicator))
         self.transport = transport
-
+        self.address, self.port = transport.get_extra_info("sockname")
+        if self.logging:
+            print("PLS %s Protocol: address is %s, and port is %s" % (self.Side_Indicator, self.address, self.port))
         self.send_Client_Hello_Packet()
 
     def send_Client_Hello_Packet(self, callback=None):
@@ -46,7 +48,7 @@ class PLSClientProtocol(PLSProtocol):
         else:
             self._callback = callback
             self.nonceC = random.randint(1, 2 ** 64)
-            certs = CertFactory.getCertsForAddr("20174.1.636.300")
+            certs = CertFactory.getCertsForAddr(self.address)
             # certs.append(b"cert client") # use fake cert for now
             outBoundPacket = PlsHello.create(self.nonceC, certs)
             if self.logging:
@@ -76,7 +78,7 @@ class PLSClientProtocol(PLSProtocol):
         self.transport.write(packetBytes)
 
     def decrypt_RSA(self, Perkey):
-        privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr("20174.1.636.300"))
+        privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr(self.address))
         privobj = PKCS1_OAEP.new(privobj)
         self.pkS = privobj.decrypt(Perkey)
         # print(self.pkS)
