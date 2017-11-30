@@ -69,16 +69,16 @@ Table of Contents
      2.5.  PlsClose Packet  . . . . . . . . . . . . . . . . . . . . .  4
    3.  Session Life . . . . . . . . . . . . . . . . . . . . . . . . .  5
      3.1.  Session Establishment  . . . . . . . . . . . . . . . . . .  5
-       3.1.1.  Certificate Authorization  . . . . . . . . . . . . . .  5
-       3.1.2.  Key Derivation . . . . . . . . . . . . . . . . . . . .  6
-       3.1.3.  Error Handling . . . . . . . . . . . . . . . . . . . .  7
-     3.2.  Data Transmission  . . . . . . . . . . . . . . . . . . . .  7
-       3.2.1.  Error Handling . . . . . . . . . . . . . . . . . . . .  8
-     3.3.  Session Termination  . . . . . . . . . . . . . . . . . . .  8
+       3.1.1.  Certificate Chain Validation . . . . . . . . . . . . .  5
+       3.1.2.  Certificate Signing Request  . . . . . . . . . . . . .  6
+       3.1.3.  Key Derivation . . . . . . . . . . . . . . . . . . . .  7
+       3.1.4.  Error Handling . . . . . . . . . . . . . . . . . . . .  8
+     3.2.  Data Transmission  . . . . . . . . . . . . . . . . . . . .  8
+       3.2.1.  Error Handling . . . . . . . . . . . . . . . . . . . .  9
+     3.3.  Session Termination  . . . . . . . . . . . . . . . . . . .  9
    4.  Normative References . . . . . . . . . . . . . . . . . . . . .  9
    Author's Address . . . . . . . . . . . . . . . . . . . . . . . . .  9
    Intellectual Property and Copyright Statements . . . . . . . . . . 10
-
 
 
 
@@ -157,8 +157,8 @@ RFC 2                           Lab3PRFC                   November 2017
    Each "Nonce" is a 64 bit random integer.  "Certs" is a list of
    certificates required for authorization, with the first one being the
    certificate of the client or the server, depending on which one sent
-   the packet.
-
+   the packet.  The last certificate MAY be the root certificate.  The
+   rest MUST be any intermediate CA's in order.
 
 
 
@@ -269,10 +269,10 @@ RFC 2                           Lab3PRFC                   November 2017
    simultaneously since they both contain hashes of the packets before
    this step, so they are not contingent on each other.
 
-3.1.1.  Certificate Authorization
+3.1.1.  Certificate Chain Validation
 
-   To generate the certificates needed in the PlsHello packets, there
-   are six certificates we MUST consider: the root cert, the group cert
+   The list of certificates sent by the PlsHello packets are as follows:
+   Certs[0] MUST be the certificate of the host, Certs[n] MAY be the
 
 
 
@@ -281,9 +281,35 @@ Hsia                         Standards Track                    [Page 5]
 RFC 2                           Lab3PRFC                   November 2017
 
 
-   that is signed by the root cert, a client private key, a server
-   private key, a client cert signed by the group cert and a server cert
-   signed by the group cert.
+   root certificate, and the certificates in between MUST be any
+   intermediate CA's in order.
+
+   The common name of the subject name of Certs[0] MUST be the same as
+   the playground address of the host.
+
+   The common name of each successive CA MUST be a prefix of the
+   previous certificate.  For example, if Certs[0] is 20174.1.100.200,
+   then Certs[1] is 20174.1.100.  The root MUST be 20174.1, however.
+
+   Each certificate must be signed by the successive CA certificate back
+   to the root.
+
+   Then, to validate the incoming certificates, the protocol MUST verify
+   that the common name of the subject name of the first certificate
+   matches the playground address of the incoming connection.  It also
+   MUST check that each CA is a prefix of the lower certificate.  And
+   lastly, it MUST ensure that each certificate is signed by the root
+   certificate.  More error checking can be made based on
+   implementation.
+
+3.1.2.  Certificate Signing Request
+
+   To generate the certificates needed in the PlsHello packets, there
+   exists a certificate signing process which will be described in this
+   section.  There are six certificates we MUST consider: the root cert,
+   the group cert that is signed by the root cert, a client private key,
+   a server private key, a client cert signed by the group cert and a
+   server cert signed by the group cert.
 
    The root cert is given and signs the group cert.  The private keys
    are generated using RSA-2048.  Next, the certificate signing request
@@ -304,6 +330,13 @@ RFC 2                           Lab3PRFC                   November 2017
 
    Email Address: ehsia1@jhu.edu
 
+
+
+Hsia                         Standards Track                    [Page 6]
+
+RFC 2                           Lab3PRFC                   November 2017
+
+
    Challenge: [LEAVE BLANK]
 
    Company: Evan Hsia
@@ -321,7 +354,7 @@ RFC 2                           Lab3PRFC                   November 2017
    key of an intermediate CA.  These CSRs are optional and depend on
    implementation.
 
-3.1.2.  Key Derivation
+3.1.3.  Key Derivation
 
    The client needs to generate a client encryption key, a server
    encryption key which serves as the client's decryption key, a client
@@ -329,14 +362,6 @@ RFC 2                           Lab3PRFC                   November 2017
    verification key.  The server needs to generate the same 4 keys, with
    the roles being flipped (so the client MAC key serves as the server's
    verification key and the client's encryption key serves as the
-
-
-
-Hsia                         Standards Track                    [Page 6]
-
-RFC 2                           Lab3PRFC                   November 2017
-
-
    server's decryption key).  Each key is 128 bits.  Each side also
    generates an encryption IV of size 128 bits.
 
@@ -357,7 +382,18 @@ RFC 2                           Lab3PRFC                   November 2017
    next 128 bits, and the MAC key of the server is the next 128 bits.
    The final 32 bits is discarded.
 
-3.1.3.  Error Handling
+
+
+
+
+
+
+Hsia                         Standards Track                    [Page 7]
+
+RFC 2                           Lab3PRFC                   November 2017
+
+
+3.1.4.  Error Handling
 
    If either client or server detects an error, it should send a
    PlsClose packet with an error message.  The text of the error message
@@ -385,14 +421,6 @@ RFC 2                           Lab3PRFC                   November 2017
    and the Verification engine is created based on the other protocol's
    MAC key.
 
-
-
-
-Hsia                         Standards Track                    [Page 7]
-
-RFC 2                           Lab3PRFC                   November 2017
-
-
    To actually send data, plain text is encrypted through the encryption
    engine to create the Ciphertext of the data packet, and then the
    Ciphertext is passed through the MAC engine to produce the
@@ -413,6 +441,13 @@ RFC 2                           Lab3PRFC                   November 2017
    All data is encrypted using AES-128 in CTR mode during this time.
    The encryption engine should be configured with the IV of the
    protocol as the initial counter.
+
+
+
+Hsia                         Standards Track                    [Page 8]
+
+RFC 2                           Lab3PRFC                   November 2017
+
 
    Data sent MUST be encrypted with the encryption key of the protocol.
    The Ciphertext is sent through the appropriate MAC engine using HMAC-
@@ -442,13 +477,6 @@ RFC 2                           Lab3PRFC                   November 2017
    was closed.
 
 
-
-
-Hsia                         Standards Track                    [Page 8]
-
-RFC 2                           Lab3PRFC                   November 2017
-
-
 4.  Normative References
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
@@ -467,34 +495,6 @@ Author's Address
 
    Phone: +1 860-519-4112
    Email: ehsia1@jhu.edu
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
