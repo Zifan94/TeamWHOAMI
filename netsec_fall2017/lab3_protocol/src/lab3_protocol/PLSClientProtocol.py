@@ -3,7 +3,7 @@ from playground.network.packet.fieldtypes import UINT64, UINT32, UINT16, UINT8, 
 from .PLSProtocol import *
 from ..lab3_packets import *
 from ..lab3_transport import *
-from ...CertFactory import *
+from ... import CertFactory
 from Crypto.Cipher import PKCS1_OAEP
 from playground.network.common import StackingProtocol, StackingTransport, StackingProtocolFactory
 from Crypto.Cipher import AES
@@ -33,7 +33,9 @@ class PLSClientProtocol(PLSProtocol):
         if self.logging:
             print("PLS %s Protocol: Connection Made..." % (self.Side_Indicator))
         self.transport = transport
-
+        self.address, self.port = transport.get_extra_info("sockname")
+        if self.logging:
+            print("PLS %s Protocol: ADDRESS: %s, PORT: %s" % (self.Side_Indicator, self.address, self.port))
         self.send_Client_Hello_Packet()
 
     def send_Client_Hello_Packet(self, callback=None):
@@ -46,7 +48,7 @@ class PLSClientProtocol(PLSProtocol):
         else:
             self._callback = callback
             self.nonceC = random.randint(1, 2 ** 64)
-            certs = CertFactory.getCertsForAddr("20174.1.636.300")
+            certs = CertFactory.CertFactory.getCertsForAddr(self.address)
             # certs.append(b"cert client") # use fake cert for now
             outBoundPacket = PlsHello.create(self.nonceC, certs)
             if self.logging:
@@ -76,7 +78,7 @@ class PLSClientProtocol(PLSProtocol):
         self.transport.write(packetBytes)
 
     def decrypt_RSA(self, Perkey):
-        privobj = RSA.importKey(CertFactory.getPrivateKeyForAddr("20174.1.636.300"))
+        privobj = RSA.importKey(CertFactory.CertFactory.getPrivateKeyForAddr(self.address))
         privobj = PKCS1_OAEP.new(privobj)
         self.pkS = privobj.decrypt(Perkey)
         # print(self.pkS)

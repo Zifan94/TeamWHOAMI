@@ -1,5 +1,5 @@
 from ..lab3_packets import *
-from ...CertFactory import *
+from ... import CertFactory
 from playground.network.common import StackingProtocol, StackingTransport, StackingProtocolFactory
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
@@ -48,7 +48,7 @@ class PLSProtocol(StackingProtocol):
         return commonNameAttr.value
 
     def authentication(self,certs):
-        listCertificates = [getCertFromBytes(certs[0]), getCertFromBytes(certs[1]), getCertFromBytes(CertFactory.getRootCert())]
+        listCertificates = [getCertFromBytes(certs[0]), getCertFromBytes(certs[1]), getCertFromBytes(CertFactory.CertFactory.getRootCert())]
         verifier = True
         #verify whether peeraddress equals commonname
         self.peeraddress = self.transport.get_extra_info("peername")[0]
