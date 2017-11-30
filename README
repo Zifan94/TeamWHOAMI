@@ -7,6 +7,7 @@ pip3 install pycrypto
 
 Directly copy our lab3_protocol into connects, its already include lab2_protocol in the folder, then run the echotest.
 You can use "lab3_protocol" or "WHOAMI_lab3_protocol" as the connect name.
+IP address for Client is 20174.1.636.300
 
 ===============================================================================
 
