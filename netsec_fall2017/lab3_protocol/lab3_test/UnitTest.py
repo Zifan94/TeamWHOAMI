@@ -75,8 +75,17 @@ def EngineUnitTest(loggingFlag):
 	V_ = s_VerificationEngine.calc_MAC(C)
 	msg_ = s_Decryp_Engine.decrypt(C)
 
+	msg2 = b"aaaaaaaaaaaaaaaaa"
+	C = c_Encryp_Engine.encrypt(msg2)
+	V2 = c_MACEngine.calc_MAC(C)
+
+	V_2 = s_VerificationEngine.calc_MAC(C)
+	msg_2 = s_Decryp_Engine.decrypt(C)
+
 	assert msg == msg_
 	assert V == V_
+	assert msg2 == msg_2
+	assert V2 == V_2
 	if loggingFlag == True: print ("- test for Encrytion/Decryption SUCCESS")
 
 if __name__ =="__main__":
