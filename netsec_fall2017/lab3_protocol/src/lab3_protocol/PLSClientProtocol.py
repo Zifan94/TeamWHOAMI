@@ -69,7 +69,7 @@ class PLSClientProtocol(PLSProtocol):
         rsakey = RSA.importKey(self.publickey)
         cipher = PKCS1_OAEP.new(rsakey)
         cipher_text = cipher.encrypt(self.pkC)
-        outBoundPacket = PlsKeyExchange.create(cipher_text, self.nonceC+1)
+        outBoundPacket = PlsKeyExchange.create(cipher_text, self.nonceS+1)
         if self.logging:
             print("\nPLS %s Protocol: 3. %s_PlsKeyExchange sent\n"%(self.Side_Indicator,self.Side_Indicator))
         packetBytes = outBoundPacket.__serialize__()
@@ -125,7 +125,7 @@ class PLSClientProtocol(PLSProtocol):
                         self.state = "error_state"
                         self.send_PlsClose("state not match")
                     else:
-                        if self.nonceS + 1 != packet.NoncePlusOne:
+                        if self.nonceC + 1 != packet.NoncePlusOne:
                             if self.logging:
                                 print("PLS %s Protocol: Error: Nounce error!" % self.Side_Indicator)
                             self.state = "error_state"
