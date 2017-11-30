@@ -3,7 +3,7 @@ from playground.network.packet.fieldtypes import UINT64, UINT32, UINT16, UINT8, 
 from .PLSProtocol import *
 from ..lab3_packets import *
 from ..lab3_transport import *
-from .CertFactory import *
+from ...CertFactory import *
 from Crypto.Cipher import PKCS1_OAEP
 from playground.network.common import StackingProtocol, StackingTransport, StackingProtocolFactory
 from Crypto.Cipher import AES

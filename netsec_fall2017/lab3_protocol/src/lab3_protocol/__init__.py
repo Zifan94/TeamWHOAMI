@@ -1,7 +1,6 @@
 from .PLSClientProtocol import PLSClientProtocol
 from .PLSServerProtocol import PLSServerProtocol
 from .PLSProtocol import PLSProtocol
-from .CertFactory import CertFactory
 from .Engine import *
 from playground.network.common import StackingProtocolFactory
 import playground

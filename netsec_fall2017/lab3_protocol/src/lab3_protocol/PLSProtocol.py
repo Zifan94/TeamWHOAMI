@@ -1,5 +1,5 @@
 from ..lab3_packets import *
-from .CertFactory import *
+from ...CertFactory import *
 from playground.network.common import StackingProtocol, StackingTransport, StackingProtocolFactory
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
